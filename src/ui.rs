@@ -1,6 +1,3 @@
-use self::requests_list::RequestsList;
-
-use super::app::App;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
@@ -8,7 +5,14 @@ use tui::{
     widgets::{Block, Borders, List, ListItem},
     Frame,
 };
+
+use super::app::App;
+use requests_list::RequestsList;
+use right::Right;
+
 pub mod requests_list;
+mod right;
+
 
 pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()

@@ -1,23 +1,31 @@
 use tui::{
-    widgets::{ Widget, List, ListItem },
+    widgets::{ Widget, List, ListItem, Block },
     layout::Rect,
     style::Style, buffer::Buffer,
 };
 
-#[derive(Default)]
-pub struct RequestsList {
-    text: String,
+#[derive(Default, Debug)]
+pub struct RequestsList<'b> {
+    block: Option<Block<'b>>,
 }
 
-impl Widget for RequestsList {
-    fn render(self, area: Rect, buf: &mut Buffer){
-        buf.set_string(area.left(), area.top(), self.text, Style::default())
+impl<'b> RequestsList<'b> {
+    pub fn new() -> RequestsList<'b> {
+        RequestsList {
+            block: None,
+        }
+    }
+
+    pub fn block<'a>(mut self, block: Block<'b>) -> Self {
+        self.block = Some(block);
+        self
     }
 }
 
-impl RequestsList {
-    pub fn text(mut self, text: String) -> Self {
-        self.text = text;
-        self
+impl<'b> Widget for RequestsList<'b> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        List::new(
+            [ListItem::new("Test 1"), ListItem::new("Test 2")]
+        ).block(self.block.unwrap_or_default()).render(area, buf);
     }
 }

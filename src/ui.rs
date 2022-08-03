@@ -9,9 +9,9 @@ use requests_list::RequestsList;
 use right::Right;
 
 mod requests_list;
-mod right;
+pub mod right;
 
-pub fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
+pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(if app.requests {
@@ -26,5 +26,5 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
         f.render_widget(requests_list, chunks[0]);
     }
     
-    f.render_widget(Right::default(), chunks[1]);
+    f.render_stateful_widget(Right::default(), chunks[1], &mut app.right_state);
 }

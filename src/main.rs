@@ -45,12 +45,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
     loop {
-        terminal.draw(|f| ui(f, &app))?;
+        terminal.draw(|f| ui(f, &mut app))?;
 
         if let Event::Key(key) = event::read()? {
             match key.code {
                 KeyCode::Char('q') => return Ok(()),
                 KeyCode::Char('r') => app.toggle_requests(),
+                KeyCode::Left => app.right_state.request_state.prev(),
+                KeyCode::Right => app.right_state.request_state.next(),
                 _ => {},
             }
         }

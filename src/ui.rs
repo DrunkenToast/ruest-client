@@ -1,11 +1,12 @@
 use super::app::App;
-
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
     widgets::{Block, Borders},
     Frame,
 };
+use super::ui::requests_list::RequestsList;
+mod requests_list;
 
 pub fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
     let chunks = Layout::default()
@@ -18,10 +19,10 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
         .split(f.size());
 
     if app.requests {
-        let block = Block::default().title("left").borders(Borders::ALL);
-        f.render_widget(block, chunks[0]);
+        let requests_list = RequestsList::default().text(":D".to_string());
+        f.render_widget(requests_list, chunks[0]);
     }
-
+    
     let block = Block::default().title("right").borders(Borders::ALL);
     f.render_widget(block, chunks[1]);
 }

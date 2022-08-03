@@ -53,7 +53,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
                 KeyCode::Char('r') => app.toggle_requests(),
                 KeyCode::Down => app.requests_list.next(),
                 KeyCode::Up => app.requests_list.previous(),
-                _ => {}
+                _ => {},
             }
         }
     }

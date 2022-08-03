@@ -1,3 +1,5 @@
+use tui::widgets::Tabs;
+
 #[derive(Debug)]
 pub struct App {
     pub requests: bool,

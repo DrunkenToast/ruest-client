@@ -51,6 +51,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
             match key.code {
                 KeyCode::Char('q') => return Ok(()),
                 KeyCode::Char('r') => app.toggle_requests(),
+                KeyCode::Right => app.
                 _ => {},
             }
         }

@@ -1,4 +1,3 @@
-//not cool github
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -6,11 +5,12 @@ use crossterm::{
 };
 use std::{error::Error, io};
 use tui::{
-    backend::{Backend, CrosstermBackend}, Terminal,
+    backend::{Backend, CrosstermBackend},
+    Terminal,
 };
 
-use ui::ui;
 use app::App;
+use ui::ui;
 
 mod ui;
 mod app;
@@ -51,13 +51,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
             match key.code {
                 KeyCode::Char('q') => return Ok(()),
                 KeyCode::Char('r') => app.toggle_requests(),
-<<<<<<< HEAD
-                KeyCode::Right => app.
-=======
                 KeyCode::Left => app.right_state.request_state.prev(),
                 KeyCode::Right => app.right_state.request_state.next(),
->>>>>>> 1d0230b0e84c5676f1104d2871313d3c9a85c0fd
-                _ => {},
+                _ => {}
             }
         }
     }

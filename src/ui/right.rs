@@ -4,19 +4,16 @@ use tui::{
     widgets::{Block, Borders, StatefulWidget, Widget},
 };
 
-<<<<<<< HEAD
-use self::request::Request;
-use self::response::Response;
-=======
+use self::response::{Response, ResponseState};
 use self::request::{Request, RequestState};
 
->>>>>>> 1d0230b0e84c5676f1104d2871313d3c9a85c0fd
 mod request;
 mod response;
 
 #[derive(Debug, Default)]
 pub struct RightState {
     pub request_state: RequestState,
+    pub response_state: ResponseState,
 }
 
 #[derive(Default)]
@@ -34,16 +31,9 @@ impl StatefulWidget for Right {
         let block1 = Block::default().title("Request").borders(Borders::ALL);
         let block2 = Block::default().title("Response").borders(Borders::ALL);
 
-<<<<<<< HEAD
-        //Request::default().render(chunks[0], buf);
-        Request::default().render(block1.inner(chunks[0]), buf);
-        Response::default().render(block2.inner(chunks[1]), buf);
-=======
         StatefulWidget::render(Request::default(), chunks[0], buf, &mut state.request_state);
-
->>>>>>> 1d0230b0e84c5676f1104d2871313d3c9a85c0fd
+        StatefulWidget::render(Response::default().block(block2), chunks[1], buf, &mut state.response_state);
         block1.render(chunks[0], buf);
-        block2.render(chunks[1], buf);
     }
 }
 

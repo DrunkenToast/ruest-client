@@ -42,7 +42,6 @@ impl<'b> StatefulWidget for Request<'b> {
     type State = RequestState;
 
     fn render(mut self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        dbg!(&state);
         let request_area = match self.block.take() {
             Some(b) => {
                 let inner_area = b.inner(area);

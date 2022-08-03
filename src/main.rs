@@ -1,3 +1,4 @@
+//not cool github
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -5,10 +6,7 @@ use crossterm::{
 };
 use std::{error::Error, io};
 use tui::{
-    backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Direction, Layout},
-    widgets::{Block, Borders},
-    Frame, Terminal,
+    backend::{Backend, CrosstermBackend}, Terminal,
 };
 
 use ui::ui;

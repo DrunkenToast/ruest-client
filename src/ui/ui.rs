@@ -1,6 +1,7 @@
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
+    widgets::{Block, Borders},
     Frame,
 };
 

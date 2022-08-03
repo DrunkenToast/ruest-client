@@ -1,16 +1,20 @@
 use super::ui::requests_list::RequestsList;
 
 #[derive(Debug)]
-pub struct App<'b> {
+pub struct App<'r> {
     pub requests: bool,
-    pub requests_list: RequestsList<'b>,
+    pub requests_list: RequestsList<&'r str>,
 }
 
-impl<'b> App<'b> {
-    pub fn new() -> App<'b> {
+impl<'r> App<'r> {
+    pub fn new() -> App<'r> {
         App {
             requests: true,
-            requests_list: RequestsList::new()
+            requests_list: RequestsList::new(vec![
+                "Request 1",
+                "Request 2",
+                "Request 3",
+            ])
         }
     }
 

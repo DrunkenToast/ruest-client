@@ -1,31 +1,97 @@
 use tui::{
-    widgets::{ Widget, List, ListItem, Block },
+    widgets::{ Widget, List, ListItem, ListState, Block, StatefulWidget },
     layout::Rect,
     style::Style, buffer::Buffer,
 };
 
-#[derive(Default, Debug)]
-pub struct RequestsList<'b> {
-    block: Option<Block<'b>>,
+#[derive(Debug, Clone, Default)]
+pub struct RequestsList<T: Copy> {
+    pub items: Vec<T>,
+    pub state: ListState,
+    visible: bool,
 }
 
-impl<'b> RequestsList<'b> {
-    pub fn new() -> RequestsList<'b> {
-        RequestsList {
-            block: None,
+impl<T: Copy> RequestsList<T> {
+    pub fn new(items: Vec<T>) -> Self {
+        Self {
+            items,
+            state: ListState::default(),
+            visible: true
         }
     }
 
-    pub fn block<'a>(mut self, block: Block<'b>) -> Self {
-        self.block = Some(block);
-        self
+    pub fn set_items(&mut self, items: Vec<T>) {
+        self.items = items;
+        // Reset state for selection and offset
+        self.state = ListState::default();
+    }
+
+    pub fn selected(&self) -> Option<T> {
+        match self.state.selected() {
+            Some(i) => {
+                Some(self.items[i])
+            }
+            None => None
+        }
+    }
+
+    pub fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i >= self.items.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i))
+    }
+
+    pub fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.items.len() - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
     }
 }
 
-impl<'b> Widget for RequestsList<'b> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        List::new(
-            [ListItem::new("Test 1"), ListItem::new("Test 2")]
-        ).block(self.block.unwrap_or_default()).render(area, buf);
-    }
-}
+// #[derive(Debug, Clone, Default)]
+// pub struct RequestsListState {
+//     items: Vec<String>
+// }
+//
+// #[derive(Default, Debug)]
+// pub struct RequestsList<'b> {
+//     block: Option<Block<'b>>,
+// }
+//
+// impl<'b> RequestsList<'b> {
+//     pub fn new() -> RequestsList<'b> {
+//         RequestsList {
+//             block: None,
+//         }
+//     }
+//
+//     pub fn block<'a>(mut self, block: Block<'b>) -> Self {
+//         self.block = Some(block);
+//         self
+//     }
+// }
+//
+// impl<'b> StatefulWidget for RequestsList<'b> {
+//     type State = RequestsListState;
+//     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+//         List::new(
+//             state.items.map(ListItem::new).collect()
+//         ).block(self.block.unwrap_or_default()).render(area, buf);
+//     }
+// }

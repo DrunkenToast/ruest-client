@@ -1,7 +1,7 @@
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
-    text::Spans,
+    text::{Span, Spans},
     widgets::{Block, Borders, Clear, List, ListItem},
     Frame,
 };
@@ -49,11 +49,22 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     f.render_stateful_widget(Right::default(), chunks[1], &mut app.right_state);
 
     if app.collection_list.visible() {
-        let block = Block::default().title("Collections").borders(Borders::ALL);
         let area = centered_rect(60, 20, size);
+        let collection_entries: Vec<_> = app
+            .collection_list
+            .items
+            .iter()
+            .map(|i| ListItem::new(Spans::from(*i)))
+            .collect();
+
+        let title = app.requests_list.selected().unwrap_or("None selected");
+
+        let collection_list = List::new(collection_entries)
+            .block(Block::default().borders(Borders::ALL).title(title))
+            .highlight_symbol("> ");
 
         // clear/empty the area of this widget
         f.render_widget(Clear, area);
-        f.render_widget(block, area);
+        f.render_stateful_widget(collection_list, area, &mut app.collection_list.state);
     }
 }

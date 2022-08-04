@@ -58,6 +58,7 @@ impl<'r> App<'r> {
                 .right_state
                 .response_state
                 .handle_key(KeyAction::from(key)),
+            Pane::CollectionList => self.collection_list.handle_key(KeyAction::from(key)),
             _ => None,
         } {
             if let Pane::Relative(_) = pane {

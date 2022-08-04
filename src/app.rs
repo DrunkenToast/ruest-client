@@ -50,9 +50,9 @@ impl<'r> App<'r> {
                 .handle_key(KeyAction::from(key)),
             _ => None,
         } {
-            if let Pane::Relative(_) = pane {
-            } else {
-                self.active_pane = pane;
+            match pane {
+                Pane::Relative(_) => {}
+                pane => self.active_pane = pane,
             }
         }
     }

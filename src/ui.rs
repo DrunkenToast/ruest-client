@@ -1,13 +1,13 @@
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
-    text::{Span, Spans},
+    text::Spans,
     widgets::{Block, Borders, List, ListItem},
     Frame,
 };
 
 use super::app::App;
-use requests_list::RequestsList;
+
 use right::Right;
 
 pub mod requests_list;
@@ -36,12 +36,12 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         let items = List::new(items)
             .block(Block::default().borders(Borders::ALL).title(title))
             .highlight_symbol("> ");
-        
+
         f.render_stateful_widget(items, chunks[0], &mut app.requests_list.state)
     }
 
     let block = Block::default().title("right").borders(Borders::ALL);
     f.render_widget(block, chunks[1]);
-    
+
     f.render_stateful_widget(Right::default(), chunks[1], &mut app.right_state);
 }

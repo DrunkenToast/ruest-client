@@ -1,10 +1,12 @@
 use tui::{
     buffer::Buffer,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
+    widgets::{Block, Borders, StatefulWidget, Tabs, Widget},
 };
+
+use crate::{app::Pane, keys::KeyAction};
 
 #[derive(Debug, Clone, Default)]
 pub struct ResponseState {
@@ -23,6 +25,23 @@ impl ResponseState {
         assert!(index < Self::TAB_LEN);
 
         self.tab_index = index;
+    }
+
+    pub fn handle_key(&mut self, key: KeyAction) -> Option<Pane> {
+        match key {
+            KeyAction::PrevTab => {
+                self.prev();
+                None
+            }
+            KeyAction::NextTab => {
+                self.next();
+                None
+            }
+            KeyAction::Accept => None,
+            KeyAction::MoveLeft => Some(Pane::Request),
+            KeyAction::MoveRight => Some(Pane::RequestList),
+            key => key.relative_or_none(),
+        }
     }
 }
 #[derive(Default)]

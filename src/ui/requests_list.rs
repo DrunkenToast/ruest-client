@@ -1,4 +1,5 @@
 use tui::widgets::ListState;
+
 use crate::keys::KeyAction;
 
 use super::super::Pane;
@@ -26,10 +27,7 @@ impl<T: Copy> RequestsList<T> {
     }
 
     pub fn selected(&self) -> Option<T> {
-        match self.state.selected() {
-            Some(i) => Some(self.items[i]),
-            None => None,
-        }
+        self.state.selected().map(|i| self.items[i])
     }
 
     pub fn next(&mut self) {
@@ -62,18 +60,20 @@ impl<T: Copy> RequestsList<T> {
 
     pub fn handle_key(&mut self, key: KeyAction) -> Option<Pane> {
         match key {
-            KeyAction::NextTab | KeyAction::Accept | KeyAction::MoveRight =>
-                // Also select request
-                Some(Pane::Request),
+            KeyAction::NextTab | KeyAction::Accept | KeyAction::MoveRight => Some(Pane::Request),
             KeyAction::MoveUp => {
                 self.previous();
                 None
-            },
+            }
             KeyAction::MoveDown => {
                 self.next();
                 None
-            },
-            _ => None
+            }
+            KeyAction::PrevTab => {
+                self.next();
+                None
+            }
+            key => key.relative_or_none(),
         }
     }
 
@@ -85,4 +85,3 @@ impl<T: Copy> RequestsList<T> {
         self.visible = !self.visible
     }
 }
-

@@ -1,5 +1,7 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
+use crate::app::{Pane, RelativePane};
+
 pub enum GlobalKeyAction {
     Quit,
     Exit,
@@ -19,6 +21,17 @@ pub enum KeyAction {
     Other,
 }
 
+impl KeyAction {
+    pub fn relative_or_none(self) -> Option<Pane> {
+        match self {
+            Self::MoveLeft => Some(Pane::Relative(RelativePane::Left)),
+            Self::MoveRight => Some(Pane::Relative(RelativePane::Right)),
+            Self::MoveUp => Some(Pane::Relative(RelativePane::Up)),
+            Self::MoveDown => Some(Pane::Relative(RelativePane::Down)),
+            _ => None,
+        }
+    }
+}
 impl From<KeyEvent> for GlobalKeyAction {
     fn from(k: KeyEvent) -> Self {
         match k {
@@ -83,7 +96,7 @@ impl From<KeyEvent> for KeyAction {
 
             KeyEvent {
                 code: KeyCode::BackTab,
-                modifiers: KeyModifiers::NONE,
+                modifiers: KeyModifiers::SHIFT,
             } => Self::PrevTab,
 
             KeyEvent {

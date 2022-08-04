@@ -1,9 +1,9 @@
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use keys::{KeyAction, GlobalKeyAction};
+use keys::GlobalKeyAction;
 use std::{error::Error, io};
 use tui::{
     backend::{Backend, CrosstermBackend},
@@ -15,8 +15,8 @@ use app::Pane;
 use ui::ui;
 
 mod app;
-mod ui;
 mod keys;
+mod ui;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
@@ -55,7 +55,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
             match GlobalKeyAction::from(key) {
                 GlobalKeyAction::Quit => return Ok(()),
                 GlobalKeyAction::ToggleRequestList => app.requests_list.toggle_visible(),
-                _ => {app.handle_key_event(key)}
+                _ => app.handle_key_event(key),
             }
         }
     }

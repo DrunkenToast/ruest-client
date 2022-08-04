@@ -1,11 +1,9 @@
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{
-        Block, Borders, Cell, Paragraph, Row, StatefulWidget, Table, TableState, Tabs, Widget, Wrap,
-    },
+    widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget, Wrap, Table, Cell, Row},
 };
 
 #[derive(Debug, Clone, Default)]

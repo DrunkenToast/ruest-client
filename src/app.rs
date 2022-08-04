@@ -1,15 +1,17 @@
-use super::ui::right::RightState;
+use super::ui::{requests_list::RequestsList, right::RightState};
 
 #[derive(Debug)]
-pub struct App {
+pub struct App<'r> {
     pub requests: bool,
+    pub requests_list: RequestsList<&'r str>,
     pub right_state: RightState,
 }
 
-impl App {
-    pub fn new() -> App {
+impl<'r> App<'r> {
+    pub fn new() -> App<'r> {
         App {
             requests: true,
+            requests_list: RequestsList::new(vec!["Request 1", "Request 2", "Request 3"]),
             right_state: RightState::default(),
         }
     }
@@ -18,4 +20,3 @@ impl App {
         self.requests = !self.requests;
     }
 }
-

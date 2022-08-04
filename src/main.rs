@@ -12,8 +12,8 @@ use tui::{
 use app::App;
 use ui::ui;
 
-mod ui;
 mod app;
+mod ui;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
@@ -55,7 +55,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
                 KeyCode::Right => app.right_state.request_state.next(),
                 KeyCode::Char('h') => app.right_state.response_state.prev(),
                 KeyCode::Char('l') => app.right_state.response_state.next(),
-                _ => {}
+                KeyCode::Down => app.requests_list.next(),
+                KeyCode::Up => app.requests_list.previous(),
+                _ => {},
             }
         }
     }

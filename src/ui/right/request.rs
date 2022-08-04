@@ -34,8 +34,13 @@ pub struct Request<'b> {
     block: Option<Block<'b>>,
 }
 
-impl Request<'_> {
+impl<'b> Request<'b> {
     const OPTIONS: &'static [&'static str] = &["Query", "Headers", "Auth", "Body"];
+
+    pub fn block(mut self, block: Block<'b>) -> Request<'b> {
+        self.block = Some(block);
+        self
+    }
 }
 
 impl<'b> StatefulWidget for Request<'b> {
@@ -63,20 +68,15 @@ impl<'b> StatefulWidget for Request<'b> {
             )
             .split(request_area);
 
-        let p1 = Paragraph::new("HOSTNAME")
+        let paragraph_hostname = Paragraph::new("HOSTNAME")
             .style(Style::default().fg(Color::White).bg(Color::Black))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 
         let titles = Self::OPTIONS
             .iter()
-            .map(|t| {
-                let (first, rest) = t.split_at(1);
-                Spans::from(vec![
-                    Span::styled(first, Style::default().fg(Color::Yellow)),
-                    Span::styled(rest, Style::default().fg(Color::Green)),
-                ])
-            })
+            .cloned()
+            .map(|t| Spans::from(Span::styled(t, Style::default().fg(Color::Green))))
             .collect();
 
         let tabs = Tabs::new(titles)
@@ -97,7 +97,7 @@ impl<'b> StatefulWidget for Request<'b> {
             _ => unreachable!(),
         };
 
-        p1.render(chunks[0], buf);
+        paragraph_hostname.render(chunks[0], buf);
         tabs.render(chunks[1], buf);
         inner.render(chunks[2], buf);
     }

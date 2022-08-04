@@ -1,15 +1,17 @@
 use tui::{
     buffer::Buffer,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget, Wrap, Table, Cell, Row},
+    widgets::{Block, Borders, Cell, Row, StatefulWidget, Table, Tabs, Widget},
 };
+
+use crate::{app::Pane, keys::KeyAction};
 
 #[derive(Debug, Clone, Default)]
 pub struct ResponseState {
     tab_index: usize,
-    status_code: reqwest::StatusCode,  
+    status_code: reqwest::StatusCode,
 }
 
 impl ResponseState {
@@ -24,6 +26,23 @@ impl ResponseState {
         assert!(index < Self::TAB_LEN);
 
         self.tab_index = index;
+    }
+
+    pub fn handle_key(&mut self, key: KeyAction) -> Option<Pane> {
+        match key {
+            KeyAction::PrevTab => {
+                self.prev();
+                None
+            }
+            KeyAction::NextTab => {
+                self.next();
+                None
+            }
+            KeyAction::Accept => None,
+            KeyAction::MoveLeft => Some(Pane::Request),
+            KeyAction::MoveRight => Some(Pane::RequestList),
+            key => key.relative_or_none(),
+        }
     }
 }
 #[derive(Default)]
@@ -69,7 +88,10 @@ impl<'b> StatefulWidget for Response<'b> {
         Widget::render(
             Table::new([Row::new([Cell::from(Spans::from(vec![
                 Span::raw(" Status: "),
-                Span::styled(state.status_code.as_str(), Style::default().fg(Color::Green)),
+                Span::styled(
+                    state.status_code.as_str(),
+                    Style::default().fg(Color::Green),
+                ),
             ]))])])
             .widths(&[Constraint::Length(12)]),
             chunks[0],

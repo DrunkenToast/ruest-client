@@ -6,6 +6,8 @@ use tui::{
     widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
 };
 
+use crate::{app::Pane, keys::KeyAction};
+
 #[derive(Debug, Clone, Default)]
 pub struct RequestState {
     tab_index: usize,
@@ -19,13 +21,30 @@ impl RequestState {
     }
 
     pub fn prev(&mut self) {
-        self.tab_index = self.tab_index.checked_sub(1).unwrap_or(Self::TAB_LEN -1 );
+        self.tab_index = self.tab_index.checked_sub(1).unwrap_or(Self::TAB_LEN - 1);
     }
 
     pub fn select(&mut self, index: usize) {
         assert!(index < Self::TAB_LEN);
 
         self.tab_index = index;
+    }
+
+    pub fn handle_key(&mut self, key: KeyAction) -> Option<Pane> {
+        match key {
+            KeyAction::PrevTab => {
+                self.prev();
+                None
+            }
+            KeyAction::NextTab => {
+                self.next();
+                None
+            }
+            KeyAction::Accept => None,
+            KeyAction::MoveLeft => Some(Pane::RequestList),
+            KeyAction::MoveRight => Some(Pane::Response),
+            key => key.relative_or_none(),
+        }
     }
 }
 
@@ -90,10 +109,18 @@ impl<'b> StatefulWidget for Request<'b> {
             );
 
         let inner = match state.tab_index {
-            0 => Block::default().title(Self::OPTIONS[0]).borders(Borders::ALL),
-            1 => Block::default().title(Self::OPTIONS[1]).borders(Borders::ALL),
-            2 => Block::default().title(Self::OPTIONS[2]).borders(Borders::ALL),
-            3 => Block::default().title(Self::OPTIONS[3]).borders(Borders::ALL),
+            0 => Block::default()
+                .title(Self::OPTIONS[0])
+                .borders(Borders::ALL),
+            1 => Block::default()
+                .title(Self::OPTIONS[1])
+                .borders(Borders::ALL),
+            2 => Block::default()
+                .title(Self::OPTIONS[2])
+                .borders(Borders::ALL),
+            3 => Block::default()
+                .title(Self::OPTIONS[3])
+                .borders(Borders::ALL),
             _ => unreachable!(),
         };
 

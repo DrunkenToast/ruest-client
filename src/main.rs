@@ -17,6 +17,7 @@ use ui::ui;
 mod app;
 mod keys;
 mod ui;
+mod util;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
@@ -55,6 +56,14 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
             match GlobalKeyAction::from(key) {
                 GlobalKeyAction::Quit => return Ok(()),
                 GlobalKeyAction::ToggleRequestList => app.requests_list.toggle_visible(),
+                GlobalKeyAction::ToggleCollectionList => {
+                    app.collection_list.toggle_visible();
+                    if app.collection_list.visible() {
+                        app.focus_pane(Pane::CollectionList);
+                    } else {
+                        app.focus_last_pane();
+                    }
+                }
                 _ => app.handle_key_event(key),
             }
         }

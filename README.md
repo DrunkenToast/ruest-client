@@ -5,6 +5,7 @@
 Global keys:
 - Quit: `q`
 - Toggle request list: `r`
+- Toggle collectino list: `C`
 
 Movement keys:
 - Left: `Left arrow` or `h`

@@ -118,25 +118,3 @@ impl From<KeyEvent> for KeyAction {
     }
 }
 
-// impl From<KeyCode> for KeyActions {
-//     fn from(k: KeyCode) -> Self {
-//         match k {
-//             KeyCode::Char('q') => Self::Quit,
-//             KeyCode::Esc => Self::Exit,
-//
-//             KeyCode::Left | KeyCode::Char('l') => Self::MoveLeft,
-//             KeyCode::Right | KeyCode::Char('h') => Self::MoveRight,
-//             KeyCode::Up | KeyCode::Char('k') => Self::MoveUp,
-//             KeyCode::Down | KeyCode::Char('j') => Self::MoveDown,
-//
-//             KeyCode::BackTab => Self::PrevTab,
-//             KeyCode::Tab => Self::NextTab,
-//
-//             KeyCode::Enter | KeyCode::Char(' ') => Self::Accept,
-//
-//             KeyCode::Char('r') => Self::ToggleRequestList,
-//             _ => Self::Other,
-//         }
-//     }
-// }
-//

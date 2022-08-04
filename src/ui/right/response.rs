@@ -6,7 +6,7 @@ use tui::{
     widgets::{Block, Borders, Cell, Row, StatefulWidget, Table, Tabs, Widget},
 };
 
-use crate::{app::Pane, keys::KeyAction};
+use crate::{app::{Pane, Actions}, keys::KeyAction};
 
 #[derive(Debug, Clone, Default)]
 pub struct ResponseState {
@@ -28,7 +28,7 @@ impl ResponseState {
         self.tab_index = index;
     }
 
-    pub fn handle_key(&mut self, key: KeyAction) -> Option<Pane> {
+    pub fn handle_key(&mut self, key: KeyAction) -> Option<Actions> {
         match key {
             KeyAction::PrevTab => {
                 self.prev();
@@ -39,8 +39,8 @@ impl ResponseState {
                 None
             }
             KeyAction::Accept => None,
-            KeyAction::MoveLeft => Some(Pane::Request),
-            KeyAction::MoveRight => Some(Pane::RequestList),
+            KeyAction::MoveLeft => Some(Actions::MoveAbsolute(Pane::Request)),
+            KeyAction::MoveRight => Some(Actions::MoveAbsolute(Pane::RequestList)),
             key => key.relative_or_none(),
         }
     }

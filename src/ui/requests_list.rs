@@ -1,6 +1,6 @@
 use tui::widgets::ListState;
 
-use crate::keys::KeyAction;
+use crate::{keys::KeyAction, app::Actions};
 
 use super::super::Pane;
 
@@ -58,9 +58,9 @@ impl<T: Copy> RequestsList<T> {
         self.state.select(Some(i));
     }
 
-    pub fn handle_key(&mut self, key: KeyAction) -> Option<Pane> {
+    pub fn handle_key(&mut self, key: KeyAction) -> Option<Actions> {
         match key {
-            KeyAction::NextTab | KeyAction::Accept | KeyAction::MoveRight => Some(Pane::Request),
+            KeyAction::NextTab | KeyAction::Accept | KeyAction::MoveRight => Some(Actions::MoveAbsolute(Pane::Request)),
             KeyAction::MoveUp => {
                 self.previous();
                 None

@@ -1,3 +1,5 @@
+use std::str::MatchIndices;
+
 use super::ui::{requests_list::RequestsList, right::RightState};
 use crossterm::event::KeyEvent;
 
@@ -10,7 +12,6 @@ pub enum Pane {
     Request,
     Response,
     Collections,
-    Relative(RelativePane),
 }
 
 #[derive(Debug, Clone)]
@@ -19,6 +20,10 @@ pub enum RelativePane {
     Down,
     Left,
     Right,
+}
+pub enum Actions{
+    MoveRelative(RelativePane),
+    MoveAbsolute(Pane),
 }
 
 #[derive(Debug)]
@@ -38,21 +43,16 @@ impl<'r> App<'r> {
     }
 
     pub fn handle_key_event(&mut self, key: KeyEvent) {
-        if let Some(pane) = match self.active_pane {
+        if let Some(action) = match self.active_pane {
             Pane::RequestList => self.requests_list.handle_key(KeyAction::from(key)),
-            Pane::Request => self
-                .right_state
-                .request_state
-                .handle_key(KeyAction::from(key)),
-            Pane::Response => self
-                .right_state
-                .response_state
-                .handle_key(KeyAction::from(key)),
+            Pane::Request => self.right_state.request_state.handle_key(KeyAction::from(key)),
+            Pane::Response => self.right_state.response_state.handle_key(KeyAction::from(key)),
             _ => None,
-        } {
-            if let Pane::Relative(_) = pane {
-            } else {
-                self.active_pane = pane;
+        }{
+            if let Actions::MoveRelative(pane) = action {
+                
+            } else if let Actions::MoveAbsolute(pane) = action{
+               self.active_pane = pane;
             }
         }
     }

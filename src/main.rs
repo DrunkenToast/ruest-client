@@ -3,6 +3,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use keys::{KeyAction, GlobalKeyAction};
 use std::{error::Error, io};
 use tui::{
     backend::{Backend, CrosstermBackend},
@@ -10,10 +11,12 @@ use tui::{
 };
 
 use app::App;
+use app::Pane;
 use ui::ui;
 
 mod app;
 mod ui;
+mod keys;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
@@ -48,14 +51,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
         terminal.draw(|f| ui(f, &mut app))?;
 
         if let Event::Key(key) = event::read()? {
-            match key.code {
-                KeyCode::Char('q') => return Ok(()),
-                KeyCode::Char('r') => app.toggle_requests(),
-                KeyCode::Down => app.requests_list.next(),
-                KeyCode::Up => app.requests_list.previous(),
-                KeyCode::Left => app.right_state.request_state.prev(),
-                KeyCode::Right => app.right_state.request_state.next(),
-                _ => {},
+            // Global keys
+            match GlobalKeyAction::from(key) {
+                GlobalKeyAction::Quit => return Ok(()),
+                GlobalKeyAction::ToggleRequestList => app.requests_list.toggle_visible(),
+                _ => {app.handle_key_event(key)}
             }
         }
     }

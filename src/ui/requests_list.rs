@@ -1,8 +1,7 @@
-use tui::{
-    widgets::{ Widget, List, ListItem, ListState, Block, StatefulWidget },
-    layout::Rect,
-    style::Style, buffer::Buffer,
-};
+use tui::widgets::ListState;
+use crate::keys::KeyAction;
+
+use super::super::Pane;
 
 #[derive(Debug, Clone, Default)]
 pub struct RequestsList<T: Copy> {
@@ -16,7 +15,7 @@ impl<T: Copy> RequestsList<T> {
         Self {
             items,
             state: ListState::default(),
-            visible: true
+            visible: true,
         }
     }
 
@@ -28,10 +27,8 @@ impl<T: Copy> RequestsList<T> {
 
     pub fn selected(&self) -> Option<T> {
         match self.state.selected() {
-            Some(i) => {
-                Some(self.items[i])
-            }
-            None => None
+            Some(i) => Some(self.items[i]),
+            None => None,
         }
     }
 
@@ -62,36 +59,30 @@ impl<T: Copy> RequestsList<T> {
         };
         self.state.select(Some(i));
     }
+
+    pub fn handle_key(&mut self, key: KeyAction) -> Option<Pane> {
+        match key {
+            KeyAction::NextTab | KeyAction::Accept | KeyAction::MoveRight =>
+                // Also select request
+                Some(Pane::Request),
+            KeyAction::MoveUp => {
+                self.previous();
+                None
+            },
+            KeyAction::MoveDown => {
+                self.next();
+                None
+            },
+            _ => None
+        }
+    }
+
+    pub fn visible(&self) -> bool {
+        self.visible
+    }
+
+    pub fn toggle_visible(&mut self) {
+        self.visible = !self.visible
+    }
 }
 
-// #[derive(Debug, Clone, Default)]
-// pub struct RequestsListState {
-//     items: Vec<String>
-// }
-//
-// #[derive(Default, Debug)]
-// pub struct RequestsList<'b> {
-//     block: Option<Block<'b>>,
-// }
-//
-// impl<'b> RequestsList<'b> {
-//     pub fn new() -> RequestsList<'b> {
-//         RequestsList {
-//             block: None,
-//         }
-//     }
-//
-//     pub fn block<'a>(mut self, block: Block<'b>) -> Self {
-//         self.block = Some(block);
-//         self
-//     }
-// }
-//
-// impl<'b> StatefulWidget for RequestsList<'b> {
-//     type State = RequestsListState;
-//     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-//         List::new(
-//             state.items.map(ListItem::new).collect()
-//         ).block(self.block.unwrap_or_default()).render(area, buf);
-//     }
-// }

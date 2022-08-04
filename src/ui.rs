@@ -16,14 +16,14 @@ pub mod right;
 pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints(if app.requests {
+        .constraints(if app.requests_list.visible() {
             [Constraint::Percentage(10), Constraint::Percentage(90)]
         } else {
             [Constraint::Max(0), Constraint::Percentage(100)]
         })
         .split(f.size());
 
-    if app.requests {
+    if app.requests_list.visible() {
         let items: Vec<ListItem> = app
             .requests_list
             .items

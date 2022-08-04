@@ -3,7 +3,7 @@ use std::str::MatchIndices;
 use super::ui::{requests_list::RequestsList, right::RightState};
 use crossterm::event::KeyEvent;
 
-use crate::keys::KeyAction;
+use crate::{keys::KeyAction, ui::right::LocalPane};
 
 #[derive(Debug, Default, Clone)]
 pub enum Pane {
@@ -47,10 +47,7 @@ impl<'r> App<'r> {
             Pane::Right => self.right_state.handle_key(KeyAction::from(key)),
             _ => None,
         } {
-            if let Actions::MoveRelative(pane) = action {
-            } else if let Actions::MoveAbsolute(pane) = action {
-                self.active_pane = pane;
-            }
+            if let Actions::MoveRelative(pane) = action {}
         }
     }
 }

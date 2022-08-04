@@ -1,7 +1,12 @@
+use std::rc::Rc;
+
 use super::ui::{requests_list::RequestsList, right::RightState};
 use crossterm::event::KeyEvent;
 
-use crate::keys::KeyAction;
+use crate::{
+    keys::KeyAction,
+    ui::theme::{GlobalTheme, Theme},
+};
 
 #[derive(Debug, Default, Clone)]
 pub enum Pane {
@@ -26,14 +31,17 @@ pub struct App<'r> {
     pub requests_list: RequestsList<&'r str>,
     pub right_state: RightState,
     pub active_pane: Pane,
+    pub theme: GlobalTheme,
 }
 
 impl<'r> App<'r> {
-    pub fn new() -> App<'r> {
+    pub fn new(theme: Theme) -> App<'r> {
+        let theme = Rc::new(theme);
         App {
             requests_list: RequestsList::new(vec!["Request 1", "Request 2", "Request 3"]),
-            right_state: RightState::default(),
+            right_state: RightState::new(theme.clone()),
             active_pane: Pane::RequestList,
+            theme,
         }
     }
 

@@ -6,15 +6,22 @@ use tui::{
     widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
 };
 
-use crate::{app::Pane, keys::KeyAction};
+use crate::{app::Pane, keys::KeyAction, ui::theme::GlobalTheme};
 
 #[derive(Debug, Clone, Default)]
 pub struct RequestState {
     tab_index: usize,
+    theme: GlobalTheme,
 }
 
 impl RequestState {
     const TAB_LEN: usize = Request::OPTIONS.len();
+    pub fn new(theme: GlobalTheme) -> Self {
+        Self {
+            tab_index: 0,
+            theme,
+        }
+    }
 
     pub fn next(&mut self) {
         self.tab_index = (self.tab_index + 1) % Self::TAB_LEN;

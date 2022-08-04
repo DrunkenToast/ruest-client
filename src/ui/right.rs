@@ -7,6 +7,8 @@ use tui::{
 use request::{Request, RequestState};
 use response::{Response, ResponseState};
 
+use super::theme::GlobalTheme;
+
 mod request;
 mod response;
 
@@ -14,10 +16,21 @@ mod response;
 pub struct RightState {
     pub request_state: RequestState,
     pub response_state: ResponseState,
+    pub theme: GlobalTheme,
 }
 
 #[derive(Default)]
 pub struct Right;
+
+impl RightState {
+    pub fn new(theme: GlobalTheme) -> Self {
+        Self {
+            request_state: RequestState::new(theme.clone()),
+            response_state: ResponseState::new(theme.clone()),
+            theme,
+        }
+    }
+}
 
 impl StatefulWidget for Right {
     type State = RightState;

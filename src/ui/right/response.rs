@@ -6,16 +6,26 @@ use tui::{
     widgets::{Block, Borders, Cell, Row, StatefulWidget, Table, Tabs, Widget},
 };
 
-use crate::{app::Pane, keys::KeyAction};
+use crate::{app::Pane, keys::KeyAction, ui::theme::GlobalTheme};
 
 #[derive(Debug, Clone, Default)]
 pub struct ResponseState {
     tab_index: usize,
     status_code: reqwest::StatusCode,
+    theme: GlobalTheme,
 }
 
 impl ResponseState {
     const TAB_LEN: usize = Response::OPTIONS.len();
+
+    pub fn new(theme: GlobalTheme) -> Self {
+        Self {
+            tab_index: 0,
+            status_code: reqwest::StatusCode::default(),
+            theme,
+        }
+    }
+
     pub fn next(&mut self) {
         self.tab_index = (self.tab_index + 1) % Self::TAB_LEN;
     }

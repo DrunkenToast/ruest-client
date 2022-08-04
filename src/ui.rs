@@ -1,6 +1,3 @@
-use self::requests_list::RequestsList;
-
-use super::app::App;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
@@ -8,7 +5,13 @@ use tui::{
     widgets::{Block, Borders, List, ListItem},
     Frame,
 };
+
+use super::app::App;
+use requests_list::RequestsList;
+use right::Right;
+
 pub mod requests_list;
+pub mod right;
 
 pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
@@ -39,4 +42,6 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     let block = Block::default().title("right").borders(Borders::ALL);
     f.render_widget(block, chunks[1]);
+    
+    f.render_stateful_widget(Right::default(), chunks[1], &mut app.right_state);
 }

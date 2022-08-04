@@ -6,9 +6,7 @@ use crossterm::{
 use std::{error::Error, io};
 use tui::{
     backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Direction, Layout},
-    widgets::{Block, Borders},
-    Frame, Terminal,
+    Terminal,
 };
 
 use app::App;
@@ -55,7 +53,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
                 KeyCode::Char('r') => app.toggle_requests(),
                 KeyCode::Down => app.requests_list.next(),
                 KeyCode::Up => app.requests_list.previous(),
-                _ => {}
+                KeyCode::Left => app.right_state.request_state.prev(),
+                KeyCode::Right => app.right_state.request_state.next(),
+                _ => {},
             }
         }
     }

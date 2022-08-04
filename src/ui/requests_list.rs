@@ -60,7 +60,7 @@ impl<T: Copy> RequestsList<T> {
 
     pub fn handle_key(&mut self, key: KeyAction) -> Option<Actions> {
         match key {
-            KeyAction::NextTab | KeyAction::Accept | KeyAction::MoveRight => Some(Actions::MoveAbsolute(Pane::Request)),
+            KeyAction::NextTab | KeyAction::Accept | KeyAction::MoveRight => Some(Actions::MoveAbsolute(Pane::Right)),
             KeyAction::MoveUp => {
                 self.previous();
                 None

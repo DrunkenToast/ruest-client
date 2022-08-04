@@ -9,8 +9,7 @@ use crate::keys::KeyAction;
 pub enum Pane {
     #[default]
     RequestList,
-    Request,
-    Response,
+    Right,
     Collections,
 }
 
@@ -21,7 +20,7 @@ pub enum RelativePane {
     Left,
     Right,
 }
-pub enum Actions{
+pub enum Actions {
     MoveRelative(RelativePane),
     MoveAbsolute(Pane),
 }
@@ -45,14 +44,12 @@ impl<'r> App<'r> {
     pub fn handle_key_event(&mut self, key: KeyEvent) {
         if let Some(action) = match self.active_pane {
             Pane::RequestList => self.requests_list.handle_key(KeyAction::from(key)),
-            Pane::Request => self.right_state.request_state.handle_key(KeyAction::from(key)),
-            Pane::Response => self.right_state.response_state.handle_key(KeyAction::from(key)),
+            Pane::Right => self.right_state.handle_key(KeyAction::from(key)),
             _ => None,
-        }{
+        } {
             if let Actions::MoveRelative(pane) = action {
-                
-            } else if let Actions::MoveAbsolute(pane) = action{
-               self.active_pane = pane;
+            } else if let Actions::MoveAbsolute(pane) = action {
+                self.active_pane = pane;
             }
         }
     }

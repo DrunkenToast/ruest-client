@@ -6,12 +6,11 @@ use tui::{
     widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
 };
 
-use crate::{app::{Pane, Actions}, keys::KeyAction};
+use crate::{app::Actions, keys::KeyAction};
 
 #[derive(Debug, Clone, Default)]
 pub struct RequestState {
     tab_index: usize,
-
 }
 
 impl RequestState {
@@ -42,8 +41,6 @@ impl RequestState {
                 None
             }
             KeyAction::Accept => None,
-            KeyAction::MoveLeft => Some(Actions::MoveAbsolute(Pane::RequestList)),
-            KeyAction::MoveRight => Some(Actions::MoveAbsolute(Pane::Response)),
             key => key.relative_or_none(),
         }
     }

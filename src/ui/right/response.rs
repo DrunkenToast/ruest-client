@@ -2,13 +2,16 @@ use tui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
-    text::Spans,
-    widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
+    text::{Span, Spans},
+    widgets::{
+        Block, Borders, Cell, Paragraph, Row, StatefulWidget, Table, TableState, Tabs, Widget, Wrap,
+    },
 };
 
 #[derive(Debug, Clone, Default)]
 pub struct ResponseState {
     tab_index: usize,
+    status_code: reqwest::StatusCode,  
 }
 
 impl ResponseState {
@@ -31,7 +34,7 @@ pub struct Response<'b> {
 }
 
 impl<'b> Response<'b> {
-    const OPTIONS: &'static [&'static str] = &["Content"];
+    const OPTIONS: &'static [&'static str] = &["Content", "Headers", "Cookies"];
 
     pub fn block(mut self, block: Block<'b>) -> Response<'b> {
         self.block = Some(block);
@@ -53,15 +56,34 @@ impl<'b> StatefulWidget for Response<'b> {
         let titles = Self::OPTIONS.iter().cloned().map(Spans::from).collect();
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
+            .constraints(
+                [
+                    Constraint::Length(1),
+                    Constraint::Length(3),
+                    Constraint::Min(0),
+                ]
+                .as_ref(),
+            )
             .split(request_area);
+        // TODO: Get status code based on respone
+        // TODO: Style status code based on range of status
+        state.status_code = reqwest::StatusCode::NOT_FOUND;
+        Widget::render(
+            Table::new([Row::new([Cell::from(Spans::from(vec![
+                Span::raw(" Status: "),
+                Span::styled(state.status_code.as_str(), Style::default().fg(Color::Green)),
+            ]))])])
+            .widths(&[Constraint::Length(12)]),
+            chunks[0],
+            buf,
+        );
         Tabs::new(titles)
-            .block(Block::default().borders())
+            .block(Block::default().borders(Borders::ALL))
             .select(state.tab_index)
             .style(Style::default().fg(Color::White))
             .highlight_style(Style::default().fg(Color::Yellow))
             .divider("|")
-            .render(chunks[0], buf);
+            .render(chunks[1], buf);
     }
 }
 

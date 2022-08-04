@@ -1,14 +1,16 @@
+use self::requests_list::RequestsList;
+
 use super::app::App;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
-    widgets::{Block, Borders},
+    text::{Span, Spans},
+    widgets::{Block, Borders, List, ListItem},
     Frame,
 };
-use super::ui::requests_list::RequestsList;
-mod requests_list;
+pub mod requests_list;
 
-pub fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
+pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(if app.requests {
@@ -19,10 +21,22 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
         .split(f.size());
 
     if app.requests {
-        let requests_list = RequestsList::default().text(":D".to_string());
-        f.render_widget(requests_list, chunks[0]);
+        let items: Vec<ListItem> = app
+            .requests_list
+            .items
+            .iter()
+            .map(|i| ListItem::new(Spans::from(*i)))
+            .collect();
+
+        let title = app.requests_list.selected().unwrap_or("None selected");
+
+        let items = List::new(items)
+            .block(Block::default().borders(Borders::ALL).title(title))
+            .highlight_symbol("> ");
+        
+        f.render_stateful_widget(items, chunks[0], &mut app.requests_list.state)
     }
-    
+
     let block = Block::default().title("right").borders(Borders::ALL);
     f.render_widget(block, chunks[1]);
 }

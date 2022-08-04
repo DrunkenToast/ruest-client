@@ -11,11 +11,11 @@ use tui::{
     Frame, Terminal,
 };
 
-use ui::ui;
 use app::App;
+use ui::ui;
 
-mod ui;
 mod app;
+mod ui;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
@@ -47,13 +47,15 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
     loop {
-        terminal.draw(|f| ui(f, &app))?;
+        terminal.draw(|f| ui(f, &mut app))?;
 
         if let Event::Key(key) = event::read()? {
             match key.code {
                 KeyCode::Char('q') => return Ok(()),
                 KeyCode::Char('r') => app.toggle_requests(),
-                _ => {},
+                KeyCode::Down => app.requests_list.next(),
+                KeyCode::Up => app.requests_list.previous(),
+                _ => {}
             }
         }
     }

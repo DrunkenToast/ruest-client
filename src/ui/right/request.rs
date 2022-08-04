@@ -19,7 +19,7 @@ impl RequestState {
     }
 
     pub fn prev(&mut self) {
-        self.tab_index = self.tab_index.checked_sub(1).unwrap_or(Self::TAB_LEN -1 );
+        self.tab_index = self.tab_index.checked_sub(1).unwrap_or(Self::TAB_LEN - 1);
     }
 
     pub fn select(&mut self, index: usize) {
@@ -90,10 +90,18 @@ impl<'b> StatefulWidget for Request<'b> {
             );
 
         let inner = match state.tab_index {
-            0 => Block::default().title(Self::OPTIONS[0]).borders(Borders::ALL),
-            1 => Block::default().title(Self::OPTIONS[1]).borders(Borders::ALL),
-            2 => Block::default().title(Self::OPTIONS[2]).borders(Borders::ALL),
-            3 => Block::default().title(Self::OPTIONS[3]).borders(Borders::ALL),
+            0 => Block::default()
+                .title(Self::OPTIONS[0])
+                .borders(Borders::ALL),
+            1 => Block::default()
+                .title(Self::OPTIONS[1])
+                .borders(Borders::ALL),
+            2 => Block::default()
+                .title(Self::OPTIONS[2])
+                .borders(Borders::ALL),
+            3 => Block::default()
+                .title(Self::OPTIONS[3])
+                .borders(Borders::ALL),
             _ => unreachable!(),
         };
 

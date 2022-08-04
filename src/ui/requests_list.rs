@@ -1,8 +1,4 @@
-use tui::{
-    widgets::{ Widget, List, ListItem, ListState, Block, StatefulWidget },
-    layout::Rect,
-    style::Style, buffer::Buffer,
-};
+use tui::widgets::ListState;
 
 #[derive(Debug, Clone, Default)]
 pub struct RequestsList<T: Copy> {
@@ -16,7 +12,7 @@ impl<T: Copy> RequestsList<T> {
         Self {
             items,
             state: ListState::default(),
-            visible: true
+            visible: true,
         }
     }
 
@@ -27,12 +23,7 @@ impl<T: Copy> RequestsList<T> {
     }
 
     pub fn selected(&self) -> Option<T> {
-        match self.state.selected() {
-            Some(i) => {
-                Some(self.items[i])
-            }
-            None => None
-        }
+        self.state.selected().map(|i| self.items[i])
     }
 
     pub fn next(&mut self) {

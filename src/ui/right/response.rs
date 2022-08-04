@@ -1,31 +1,35 @@
 use tui::{
     buffer::Buffer,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget, Wrap, Table, Cell, Row},
+    widgets::{Block, Borders, Cell, Row, StatefulWidget, Table, Tabs, Widget},
 };
 
 #[derive(Debug, Clone, Default)]
 pub struct ResponseState {
     tab_index: usize,
-    status_code: reqwest::StatusCode,  
+    status_code: reqwest::StatusCode,
 }
 
 impl ResponseState {
     const TAB_LEN: usize = Response::OPTIONS.len();
+
     pub fn next(&mut self) {
         self.tab_index = (self.tab_index + 1) % Self::TAB_LEN;
     }
+
     pub fn prev(&mut self) {
         self.tab_index = self.tab_index.checked_sub(1).unwrap_or(Self::TAB_LEN - 1);
     }
+
     pub fn select(&mut self, index: usize) {
         assert!(index < Self::TAB_LEN);
 
         self.tab_index = index;
     }
 }
+
 #[derive(Default)]
 pub struct Response<'b> {
     block: Option<Block<'b>>,
@@ -69,7 +73,10 @@ impl<'b> StatefulWidget for Response<'b> {
         Widget::render(
             Table::new([Row::new([Cell::from(Spans::from(vec![
                 Span::raw(" Status: "),
-                Span::styled(state.status_code.as_str(), Style::default().fg(Color::Green)),
+                Span::styled(
+                    state.status_code.as_str(),
+                    Style::default().fg(Color::Green),
+                ),
             ]))])])
             .widths(&[Constraint::Length(12)]),
             chunks[0],

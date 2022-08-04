@@ -51,10 +51,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
             match key.code {
                 KeyCode::Char('q') => return Ok(()),
                 KeyCode::Char('r') => app.toggle_requests(),
-                KeyCode::Down => app.requests_list.next(),
-                KeyCode::Up => app.requests_list.previous(),
                 KeyCode::Left => app.right_state.request_state.prev(),
                 KeyCode::Right => app.right_state.request_state.next(),
+                KeyCode::Char('h') => app.right_state.response_state.prev(),
+                KeyCode::Char('l') => app.right_state.response_state.next(),
+                KeyCode::Down => app.requests_list.next(),
+                KeyCode::Up => app.requests_list.previous(),
                 _ => {},
             }
         }

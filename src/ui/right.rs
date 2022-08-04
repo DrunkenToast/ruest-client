@@ -28,12 +28,17 @@ impl StatefulWidget for Right {
             .constraints([Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
             .split(area);
 
-        let block1 = Block::default().title("Request").borders(Borders::ALL);
-        let block2 = Block::default().title("Response").borders(Borders::ALL);
+        let request_block = Block::default().title("Request").borders(Borders::ALL);
+        let response_block = Block::default().title("Response").borders(Borders::ALL);
 
-        StatefulWidget::render(Request::default(), chunks[0], buf, &mut state.request_state);
         StatefulWidget::render(
-            Response::default().block(block2),
+            Request::default().block(request_block),
+            chunks[0],
+            buf,
+            &mut state.request_state,
+        );
+        StatefulWidget::render(
+            Response::default().block(response_block),
             chunks[1],
             buf,
             &mut state.response_state,

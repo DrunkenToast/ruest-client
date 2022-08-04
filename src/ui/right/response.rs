@@ -1,8 +1,8 @@
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
-    text::Spans,
+    style::{Color, Modifier, Style},
+    text::{Span, Spans},
     widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
 };
 
@@ -50,18 +50,30 @@ impl<'b> StatefulWidget for Response<'b> {
             }
             None => area,
         };
-        let titles = Self::OPTIONS.iter().cloned().map(Spans::from).collect();
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
             .split(request_area);
-        Tabs::new(titles)
-            .block(Block::default().borders(Borders::ALL))
+
+        let titles = Self::OPTIONS
+            .iter()
+            .cloned()
+            .map(|t| Spans::from(Span::styled(t, Style::default().fg(Color::Green))))
+            .collect();
+
+        let tabs = Tabs::new(titles)
+            .block(Block::default().borders(Borders::ALL).title("Tabs"))
             .select(state.tab_index)
-            .style(Style::default().fg(Color::White))
-            .highlight_style(Style::default().fg(Color::Yellow))
-            .divider("|")
-            .render(chunks[0], buf);
+            .style(Style::default().fg(Color::Cyan))
+            .highlight_style(
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .bg(Color::Black),
+            );
+
+        tabs.render(chunks[0], buf);
+        // ___.render(chunks[1], buf)
     }
 }
 

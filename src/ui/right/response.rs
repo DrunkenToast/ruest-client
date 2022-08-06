@@ -121,9 +121,8 @@ impl StatefulWidget for Response {
                 .as_ref(),
             )
             .split(request_area);
-        // TODO: Get status code based on respone
-        // TODO: Style status code based on range of status
-        state.status_code = reqwest::StatusCode::BAD_GATEWAY;
+        // TODO: Get status code based on response
+        state.status_code = reqwest::StatusCode::NOT_FOUND;
         Widget::render(
             Table::new([Row::new([Cell::from(Spans::from(vec![
                 Span::raw(" Status: "),

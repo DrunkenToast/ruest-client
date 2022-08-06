@@ -1,8 +1,7 @@
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
-    text::{Span, Spans},
+    text::Spans,
     widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
 };
 
@@ -10,7 +9,7 @@ use crate::{
     app::{Actions, Movement, PaneType},
     keys::KeyAction,
     pane::Pane,
-    ui::theme::GlobalTheme
+    ui::theme::GlobalTheme,
 };
 
 use super::RightStatePane;
@@ -78,21 +77,6 @@ impl RequestState {
 
         self.tab_index = index;
     }
-
-    pub fn handle_key(&mut self, key: KeyAction) -> Option<Actions> {
-        match key {
-            KeyAction::PrevTab => {
-                self.prev();
-                None
-            }
-            KeyAction::NextTab => {
-                self.next();
-                None
-            }
-            KeyAction::Accept => None,
-            key => key.relative_or_none(),
-        }
-    }
 }
 
 #[derive(Clone, Default)]
@@ -105,7 +89,9 @@ impl Request {
 impl StatefulWidget for Request {
     type State = RequestState;
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let block = Block::default().title("Request").borders(Borders::ALL)
+        let block = Block::default()
+            .title("Request")
+            .borders(Borders::ALL)
             .style(state.theme.block(state.active));
         let request_area = block.inner(area);
         block.render(area, buf);
@@ -137,14 +123,13 @@ impl StatefulWidget for Request {
         paragraph_hostname.render(chunks[0], buf);
         tabs.render(chunks[1], buf);
         if state.tab_index < Self::OPTIONS.len() {
-            let inner = Block::default().title(Self::OPTIONS[state.tab_index])
+            let inner = Block::default()
+                .title(Self::OPTIONS[state.tab_index])
                 .borders(Borders::ALL)
                 .style(state.theme.block(state.active()));
             inner.render(chunks[2], buf);
-        }
-        else {
+        } else {
             unreachable!()
         }
     }
 }
-

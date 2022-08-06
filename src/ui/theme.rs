@@ -7,7 +7,6 @@ pub type GlobalTheme = Rc<Theme>;
 #[derive(Debug)]
 pub struct Theme {
     selected: Color,
-    highlighted: Color,
     focused: Color,
     disabled: Color,
 
@@ -27,7 +26,6 @@ impl Default for Theme {
     fn default() -> Self {
         Self {
             selected: Color::Yellow,
-            highlighted: Color::Blue,
             focused: Color::White,
             disabled: Color::DarkGray,
 
@@ -63,7 +61,6 @@ impl Theme {
     }
 
     pub fn status_code(&self, code: u16) -> Style {
-        dbg!(code);
         let style = Style::default().add_modifier(Modifier::BOLD);
         match code {
             c if c / 500 == 1 => style.bg(self.status_500_bg).fg(self.status_500_fg),

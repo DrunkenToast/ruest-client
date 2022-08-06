@@ -1,7 +1,7 @@
 use tui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
-    widgets::{Block, Borders, StatefulWidget, Widget},
+    widgets::StatefulWidget,
 };
 
 use request::{Request, RequestState};
@@ -32,7 +32,7 @@ impl RightState {
     pub fn new(theme: GlobalTheme) -> Self {
         Self {
             request_state: RequestState::new(theme.clone()),
-            response_state: ResponseState::new(theme.clone()),
+            response_state: ResponseState::new(theme),
         }
     }
 }
@@ -46,12 +46,7 @@ impl StatefulWidget for Right {
             .constraints([Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
             .split(area);
 
-        StatefulWidget::render(
-            Request::default(),
-            chunks[0],
-            buf,
-            &mut state.request_state,
-        );
+        StatefulWidget::render(Request::default(), chunks[0], buf, &mut state.request_state);
         StatefulWidget::render(
             Response::default(),
             chunks[1],
@@ -60,4 +55,3 @@ impl StatefulWidget for Right {
         );
     }
 }
-

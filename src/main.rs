@@ -11,7 +11,7 @@ use tui::{
 };
 
 use app::App;
-use ui::{ui, theme::Theme};
+use ui::{theme::Theme, ui};
 
 mod app;
 mod keys;

@@ -1,7 +1,6 @@
 use tui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, Cell, Row, StatefulWidget, Table, Tabs, Widget},
 };
@@ -9,7 +8,8 @@ use tui::{
 use crate::{
     app::{Actions, Movement, PaneType},
     keys::KeyAction,
-    pane::Pane, ui::theme::GlobalTheme,
+    pane::Pane,
+    ui::theme::GlobalTheme,
 };
 
 use super::RightStatePane;
@@ -78,21 +78,6 @@ impl ResponseState {
 
         self.tab_index = index;
     }
-
-    pub fn handle_key(&mut self, key: KeyAction) -> Option<Actions> {
-        match key {
-            KeyAction::PrevTab => {
-                self.prev();
-                None
-            }
-            KeyAction::NextTab => {
-                self.next();
-                None
-            }
-            KeyAction::Accept => None,
-            key => key.relative_or_none(),
-        }
-    }
 }
 #[derive(Default)]
 pub struct Response {}
@@ -104,7 +89,9 @@ impl Response {
 impl StatefulWidget for Response {
     type State = ResponseState;
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let block = Block::default().title("Response").borders(Borders::ALL)
+        let block = Block::default()
+            .title("Response")
+            .borders(Borders::ALL)
             .style(state.theme.block(state.active));
         let request_area = block.inner(area);
         block.render(area, buf);
@@ -143,4 +130,3 @@ impl StatefulWidget for Response {
             .render(chunks[1], buf);
     }
 }
-

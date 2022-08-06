@@ -3,11 +3,12 @@ use std::rc::Rc;
 use super::ui::{requests_list::RequestsList, right::RightState};
 use crossterm::event::KeyEvent;
 
+use crate::ui::right::RightStatePane;
 use crate::{
     keys::KeyAction,
-    ui::theme::{GlobalTheme, Theme}, pane::Pane,
+    pane::Pane,
+    ui::theme::{GlobalTheme, Theme},
 };
-use crate::ui::right::RightStatePane;
 
 #[derive(Debug, Default, Clone)]
 pub enum PaneType {
@@ -26,7 +27,6 @@ pub enum Movement {
 
 pub enum Actions {
     MoveRelative(Movement),
-    InputMode,
 }
 
 pub struct App<'a> {

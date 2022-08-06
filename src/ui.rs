@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
@@ -8,9 +6,7 @@ use tui::{
     Frame,
 };
 
-use crate::app::Pane;
-
-use self::theme::Theme;
+use crate::pane::Pane;
 
 use super::app::App;
 
@@ -35,18 +31,20 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
             .requests_list
             .items
             .iter()
-            .map(|i| ListItem::new(Spans::from(*i)))
+            .map(|i| ListItem::new(Spans::from(i.as_ref())))
             .collect();
 
         let title = app.requests_list.selected().unwrap_or("None selected");
 
         let items = List::new(items)
-            .block(Block::default()
-                .borders(Borders::ALL)
-                .title(title)
-                .style(app.theme.block(matches!(app.active_pane, Pane::RequestList)))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(title)
+                    .style(app.theme.block(app.requests_list.active())),
             )
-            .highlight_symbol("> ");
+            .highlight_symbol("> ")
+            .highlight_style(app.theme.selected());
 
         f.render_stateful_widget(items, chunks[0], &mut app.requests_list.state)
     }

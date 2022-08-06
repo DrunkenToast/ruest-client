@@ -1,6 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use crate::app::{Pane, RelativePane};
+use crate::app::{Actions, Movement};
 
 pub enum GlobalKeyAction {
     Quit,
@@ -22,12 +22,12 @@ pub enum KeyAction {
 }
 
 impl KeyAction {
-    pub fn relative_or_none(self) -> Option<Pane> {
+    pub fn relative_or_none(self) -> Option<Actions> {
         match self {
-            Self::MoveLeft => Some(Pane::Relative(RelativePane::Left)),
-            Self::MoveRight => Some(Pane::Relative(RelativePane::Right)),
-            Self::MoveUp => Some(Pane::Relative(RelativePane::Up)),
-            Self::MoveDown => Some(Pane::Relative(RelativePane::Down)),
+            Self::MoveLeft => Some(Actions::MoveRelative(Movement::Left)),
+            Self::MoveRight => Some(Actions::MoveRelative(Movement::Right)),
+            Self::MoveUp => Some(Actions::MoveRelative(Movement::Up)),
+            Self::MoveDown => Some(Actions::MoveRelative(Movement::Down)),
             _ => None,
         }
     }
@@ -117,4 +117,3 @@ impl From<KeyEvent> for KeyAction {
         }
     }
 }
-

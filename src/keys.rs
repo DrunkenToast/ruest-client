@@ -57,64 +57,36 @@ impl From<KeyEvent> for KeyAction {
                 code: KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
             } => Self::Exit,
-
             KeyEvent {
-                code: KeyCode::Left,
-                modifiers: KeyModifiers::NONE,
-            }
-            | KeyEvent {
-                code: KeyCode::Char('h'),
+                code: KeyCode::Left | KeyCode::Char('h'),
                 modifiers: KeyModifiers::NONE,
             } => Self::MoveLeft,
 
             KeyEvent {
-                code: KeyCode::Right,
-                modifiers: KeyModifiers::NONE,
-            }
-            | KeyEvent {
-                code: KeyCode::Char('l'),
+                code: KeyCode::Right | KeyCode::Char('l'),
                 modifiers: KeyModifiers::NONE,
             } => Self::MoveRight,
-
             KeyEvent {
-                code: KeyCode::Up,
-                modifiers: KeyModifiers::NONE,
-            }
-            | KeyEvent {
-                code: KeyCode::Char('k'),
+                code: KeyCode::Up | KeyCode::Char('k'),
                 modifiers: KeyModifiers::NONE,
             } => Self::MoveUp,
-
             KeyEvent {
-                code: KeyCode::Down,
-                modifiers: KeyModifiers::NONE,
-            }
-            | KeyEvent {
-                code: KeyCode::Char('j'),
+                code: KeyCode::Down | KeyCode::Char('j'),
                 modifiers: KeyModifiers::NONE,
             } => Self::MoveDown,
-
             KeyEvent {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
             } => Self::PrevTab,
-
             KeyEvent {
                 code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
             } => Self::NextTab,
-
             KeyEvent {
-                code: KeyCode::Enter,
-                modifiers: KeyModifiers::NONE,
-            }
-            | KeyEvent {
-                code: KeyCode::Char(' '),
+                code: KeyCode::Enter | KeyCode::Char(' '),
                 modifiers: KeyModifiers::NONE,
             } => Self::Accept,
-
             _ => Self::Other,
         }
     }
 }
-

@@ -7,11 +7,6 @@ use tui::{
 use request::{Request, RequestState};
 use response::{Response, ResponseState};
 
-use crate::{
-    app::{Actions, Pane, RelativePane},
-    keys::KeyAction,
-};
-
 mod request;
 mod response;
 
@@ -19,49 +14,13 @@ mod response;
 pub struct RightState {
     pub request_state: RequestState,
     pub response_state: ResponseState,
-    pub local_pane: LocalPane,
+    // pub local_pane: RightStatePane,
 }
 
-impl RightState {
-    pub fn handle_key(&mut self, key: KeyAction) -> Option<Actions> {
-        match key {
-            KeyAction::MoveLeft => match self.local_pane {
-                LocalPane::Response => {
-                    self.local_pane = LocalPane::Request;
-                    Some(Actions::MoveRelative(RelativePane::Left))
-                }
-                LocalPane::Request => {
-                    self.local_pane = LocalPane::None;
-                    Some(Actions::MoveAbsolute(Pane::RequestList))
-                }
-                LocalPane::None => None,
-            },
-            KeyAction::MoveRight => match self.local_pane {
-                LocalPane::Response => {
-                    self.local_pane = LocalPane::None;
-                    Some(Actions::MoveAbsolute(Pane::RequestList))
-                }
-                LocalPane::Request => {
-                    self.local_pane = LocalPane::Response;
-                    Some(Actions::MoveRelative(RelativePane::Right))
-                }
-                LocalPane::None => None,
-            },
-            key => match self.local_pane {
-                LocalPane::Request => self.request_state.handle_key(key),
-                LocalPane::Response => self.response_state.handle_key(key),
-                LocalPane::None => None,
-            },
-        }
-    }
-}
-
-#[derive(Debug, Default)]
-pub enum LocalPane {
+#[derive(Debug, Copy, Clone)]
+pub enum RightStatePane {
     Request,
     Response,
-    #[default]
-    None,
 }
 
 #[derive(Default)]

@@ -1,53 +1,67 @@
-use std::str::MatchIndices;
+use std::rc::Rc;
 
 use super::ui::{requests_list::RequestsList, right::RightState};
 use crossterm::event::KeyEvent;
 
-use crate::{keys::KeyAction, ui::right::LocalPane};
+use crate::{keys::KeyAction, pane::Pane, ui::right::RightStatePane};
 
 #[derive(Debug, Default, Clone)]
-pub enum Pane {
+pub enum PaneType {
     #[default]
     RequestList,
-    Right,
-    Collections,
+    Right(RightStatePane),
 }
 
-#[derive(Debug, Clone)]
-pub enum RelativePane {
+#[derive(Debug, Copy, Clone)]
+pub enum Movement {
     Up,
     Down,
     Left,
     Right,
 }
 pub enum Actions {
-    MoveRelative(RelativePane),
-    MoveAbsolute(Pane),
+    MoveRelative(Movement),
+    InputMode,
 }
 
-#[derive(Debug)]
-pub struct App<'r> {
-    pub requests_list: RequestsList<&'r str>,
+pub struct App<'a> {
+    pub requests_list: RequestsList<&'a str>,
     pub right_state: RightState,
-    pub active_pane: Pane,
+    active_pane_type: PaneType,
 }
 
-impl<'r> App<'r> {
-    pub fn new() -> App<'r> {
+impl<'a> App<'a> {
+    pub fn new() -> App<'a> {
+        let requests_list = RequestsList::new(vec!["Request 1", "Request 2", "Request 3"]);
+        let right_state = RightState::default();
         App {
-            requests_list: RequestsList::new(vec!["Request 1", "Request 2", "Request 3"]),
-            right_state: RightState::default(),
-            active_pane: Pane::RequestList,
+            requests_list,
+            right_state,
+            active_pane_type: PaneType::RequestList,
         }
     }
 
     pub fn handle_key_event(&mut self, key: KeyEvent) {
-        if let Some(action) = match self.active_pane {
-            Pane::RequestList => self.requests_list.handle_key(KeyAction::from(key)),
-            Pane::Right => self.right_state.handle_key(KeyAction::from(key)),
-            _ => None,
-        } {
-            if let Actions::MoveRelative(pane) = action {}
+        if let Some(action) = self.active_pane().handle_key(KeyAction::from(key)) {
+            if let Actions::MoveRelative(dir) = action {
+                dbg!(&dir);
+                self.active_pane().set_active(false);
+                if let Some(pane) = self.active_pane().relative_pane(dir) {
+                    self.active_pane_type = pane;
+                    dbg!(&self.active_pane_type);
+                }
+                self.active_pane().set_active(true);
+            }
+        }
+    }
+
+    pub fn active_pane(&mut self) -> &mut dyn Pane {
+        match self.active_pane_type {
+            PaneType::RequestList => &mut self.requests_list,
+            PaneType::Right(pane) => match pane {
+                RightStatePane::Request => &mut self.right_state.request_state,
+                RightStatePane::Response => &mut self.right_state.response_state,
+            },
         }
     }
 }

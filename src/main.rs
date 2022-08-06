@@ -11,11 +11,11 @@ use tui::{
 };
 
 use app::App;
-use app::Pane;
 use ui::ui;
 
 mod app;
 mod keys;
+mod pane;
 mod ui;
 
 fn main() -> Result<(), Box<dyn Error>> {

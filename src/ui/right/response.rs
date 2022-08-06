@@ -6,14 +6,53 @@ use tui::{
     widgets::{Block, Borders, Cell, Row, StatefulWidget, Table, Tabs, Widget},
 };
 
-use crate::{app::Actions, keys::KeyAction};
+use crate::{
+    app::{Actions, Movement, PaneType},
+    keys::KeyAction,
+    pane::Pane,
+};
+
+use super::RightStatePane;
 
 #[derive(Debug, Clone, Default)]
 pub struct ResponseState {
     tab_index: usize,
     status_code: reqwest::StatusCode,
+    active: bool,
 }
 
+impl Pane for ResponseState {
+    fn handle_key(&mut self, key: KeyAction) -> Option<Actions> {
+        match key {
+            KeyAction::PrevTab => {
+                self.prev();
+                None
+            }
+            KeyAction::NextTab => {
+                self.next();
+                None
+            }
+            key => key.relative_or_none(),
+        }
+    }
+
+    fn relative_pane(&self, dir: crate::app::Movement) -> Option<PaneType> {
+        match dir {
+            Movement::Up => None,
+            Movement::Down => None,
+            Movement::Left => Some(PaneType::Right(RightStatePane::Request)),
+            Movement::Right => Some(PaneType::RequestList),
+        }
+    }
+
+    fn active(&self) -> bool {
+        self.active
+    }
+
+    fn set_active(&mut self, active: bool) {
+        self.active = active
+    }
+}
 impl ResponseState {
     const TAB_LEN: usize = Response::OPTIONS.len();
     pub fn next(&mut self) {

@@ -22,7 +22,7 @@ pub struct RightState {
     // pub local_pane: RightStatePane,
 }
 
-#[derive(Debug, Copy, Clone, Default)]
+#[derive(Debug, Copy, Clone, Default, PartialEq)]
 pub enum RightStatePane {
     #[default]
     Request,

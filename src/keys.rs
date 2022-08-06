@@ -9,7 +9,7 @@ pub enum GlobalKeyAction {
     Other,
 }
 
-pub enum KeyAction {
+pub enum NormalKeyAction {
     Exit,
     MoveLeft,
     MoveRight,
@@ -18,10 +18,11 @@ pub enum KeyAction {
     NextTab,
     PrevTab,
     Accept,
+    InsertMode,
     Other,
 }
 
-impl KeyAction {
+impl NormalKeyAction {
     pub fn relative_or_none(self) -> Option<Actions> {
         match self {
             Self::MoveLeft => Some(Actions::MoveRelative(Movement::Left)),
@@ -32,6 +33,7 @@ impl KeyAction {
         }
     }
 }
+
 impl From<KeyEvent> for GlobalKeyAction {
     fn from(k: KeyEvent) -> Self {
         match k {
@@ -50,7 +52,7 @@ impl From<KeyEvent> for GlobalKeyAction {
     }
 }
 
-impl From<KeyEvent> for KeyAction {
+impl From<KeyEvent> for NormalKeyAction {
     fn from(k: KeyEvent) -> Self {
         match k {
             KeyEvent {
@@ -93,6 +95,11 @@ impl From<KeyEvent> for KeyAction {
                 code: KeyCode::Char('j'),
                 modifiers: KeyModifiers::NONE,
             } => Self::MoveDown,
+
+            KeyEvent {
+                code: KeyCode::Char('i'),
+                modifiers: KeyModifiers::NONE,
+            } => Self::InsertMode,
 
             KeyEvent {
                 code: KeyCode::BackTab,

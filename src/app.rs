@@ -3,14 +3,15 @@ use std::rc::Rc;
 use super::ui::{requests_list::RequestsList, right::RightState};
 use crossterm::event::KeyEvent;
 
-use crate::ui::right::RightStatePane;
 use crate::{
-    keys::KeyAction,
     pane::Pane,
-    ui::theme::{GlobalTheme, Theme},
+    ui::{
+        right::RightStatePane,
+        theme::{GlobalTheme, Theme},
+    },
 };
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub enum PaneType {
     #[default]
     RequestList,
@@ -27,7 +28,7 @@ pub enum Movement {
 
 /// Possible input modes
 /// these mode are used to determine wich keybinds are active
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum InputMode {
     /// All "normal" keybinds are active
     Normal,
@@ -36,9 +37,11 @@ pub enum InputMode {
     Editing,
 }
 
+#[derive(Debug)]
 pub enum Actions {
     MoveRelative(Movement),
-    InputMode(InputMode),
+    DrawCursor((u16, u16)),
+    RemoveCursor,
 }
 
 pub struct App<'a> {
@@ -64,9 +67,10 @@ impl<'a> App<'a> {
         app
     }
 
-    pub fn handle_key_event(&mut self, key: KeyEvent) {
-        if let Some(action) = self.active_pane().handle_key(KeyAction::from(key)) {
+    pub fn handle_key_event(&mut self, key_event: KeyEvent) {
+        if let Some(action) = self.active_pane().handle_key(key_event) {
             if let Actions::MoveRelative(dir) = action {
+                // TODO: move .relative_pane() into .handle_key()
                 if let Some(pane) = self.active_pane().relative_pane(dir) {
                     self.activate_pane(pane);
                 }
@@ -82,8 +86,10 @@ impl<'a> App<'a> {
     }
 
     fn activate_pane(&mut self, pane: PaneType) {
-        self.active_pane().set_active(false);
-        self.active_pane_type = pane;
-        self.active_pane().set_active(true);
+        if self.active_pane_type != pane {
+            self.active_pane().set_active(false);
+            self.active_pane_type = pane;
+            self.active_pane().set_active(true);
+        }
     }
 }

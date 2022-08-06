@@ -1,7 +1,6 @@
 use tui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, Cell, Row, StatefulWidget, Table, Tabs, Widget},
 };
@@ -10,14 +9,16 @@ use crate::{
     app::{Actions, Movement, PaneType},
     keys::KeyAction,
     pane::Pane,
+    ui::theme::GlobalTheme,
 };
 
 use super::RightStatePane;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct ResponseState {
     tab_index: usize,
     status_code: reqwest::StatusCode,
+    theme: GlobalTheme,
     active: bool,
 }
 
@@ -53,8 +54,19 @@ impl Pane for ResponseState {
         self.active = active
     }
 }
+
 impl ResponseState {
     const TAB_LEN: usize = Response::OPTIONS.len();
+
+    pub fn new(theme: GlobalTheme) -> Self {
+        Self {
+            tab_index: 0,
+            status_code: reqwest::StatusCode::default(),
+            theme,
+            active: false,
+        }
+    }
+
     pub fn next(&mut self) {
         self.tab_index = (self.tab_index + 1) % Self::TAB_LEN;
     }
@@ -66,47 +78,24 @@ impl ResponseState {
 
         self.tab_index = index;
     }
-
-    pub fn handle_key(&mut self, key: KeyAction) -> Option<Actions> {
-        match key {
-            KeyAction::PrevTab => {
-                self.prev();
-                None
-            }
-            KeyAction::NextTab => {
-                self.next();
-                None
-            }
-            KeyAction::Accept => None,
-            key => key.relative_or_none(),
-        }
-    }
 }
 #[derive(Default)]
-pub struct Response<'b> {
-    block: Option<Block<'b>>,
-}
+pub struct Response {}
 
-impl<'b> Response<'b> {
+impl Response {
     const OPTIONS: &'static [&'static str] = &["Content", "Headers", "Cookies"];
-
-    pub fn block(mut self, block: Block<'b>) -> Response<'b> {
-        self.block = Some(block);
-        self
-    }
 }
 
-impl<'b> StatefulWidget for Response<'b> {
+impl StatefulWidget for Response {
     type State = ResponseState;
-    fn render(mut self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let request_area = match self.block.take() {
-            Some(b) => {
-                let inner_area = b.inner(area);
-                b.render(area, buf);
-                inner_area
-            }
-            None => area,
-        };
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+        let block = Block::default()
+            .title("Response")
+            .borders(Borders::ALL)
+            .style(state.theme.block(state.active));
+        let request_area = block.inner(area);
+        block.render(area, buf);
+
         let titles = Self::OPTIONS.iter().cloned().map(Spans::from).collect();
         let chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -119,15 +108,14 @@ impl<'b> StatefulWidget for Response<'b> {
                 .as_ref(),
             )
             .split(request_area);
-        // TODO: Get status code based on respone
-        // TODO: Style status code based on range of status
+        // TODO: Get status code based on response
         state.status_code = reqwest::StatusCode::NOT_FOUND;
         Widget::render(
             Table::new([Row::new([Cell::from(Spans::from(vec![
                 Span::raw(" Status: "),
                 Span::styled(
                     state.status_code.as_str(),
-                    Style::default().fg(Color::Green),
+                    state.theme.status_code(state.status_code.as_u16()),
                 ),
             ]))])])
             .widths(&[Constraint::Length(12)]),
@@ -137,16 +125,8 @@ impl<'b> StatefulWidget for Response<'b> {
         Tabs::new(titles)
             .block(Block::default().borders(Borders::ALL))
             .select(state.tab_index)
-            .style(Style::default().fg(Color::White))
-            .highlight_style(Style::default().fg(Color::Yellow))
+            .highlight_style(state.theme.selected())
             .divider("|")
             .render(chunks[1], buf);
-    }
-}
-
-impl Widget for Response<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        let mut state = ResponseState::default();
-        StatefulWidget::render(self, area, buf, &mut state);
     }
 }

@@ -6,12 +6,15 @@ use tui::{
     Frame,
 };
 
+use crate::pane::Pane;
+
 use super::app::App;
 
 use right::Right;
 
 pub mod requests_list;
 pub mod right;
+pub mod theme;
 
 pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
@@ -34,8 +37,14 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         let title = app.requests_list.selected().unwrap_or("None selected");
 
         let items = List::new(items)
-            .block(Block::default().borders(Borders::ALL).title(title))
-            .highlight_symbol("> ");
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(title)
+                    .style(app.theme.block(app.requests_list.active())),
+            )
+            .highlight_symbol("> ")
+            .highlight_style(app.theme.selected());
 
         f.render_stateful_widget(items, chunks[0], &mut app.requests_list.state)
     }

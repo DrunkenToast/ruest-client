@@ -11,7 +11,7 @@ use tui::{
 };
 
 use app::App;
-use ui::ui;
+use ui::{theme::Theme, ui};
 
 mod app;
 mod keys;
@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     // create app and run it
-    let app = App::new();
+    let app = App::new(Theme::default());
     let res = run_app(&mut terminal, app);
 
     // restore terminal

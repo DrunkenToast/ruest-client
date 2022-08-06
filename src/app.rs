@@ -3,7 +3,12 @@ use std::rc::Rc;
 use super::ui::{requests_list::RequestsList, right::RightState};
 use crossterm::event::KeyEvent;
 
-use crate::{keys::KeyAction, pane::Pane, ui::right::RightStatePane};
+use crate::ui::right::RightStatePane;
+use crate::{
+    keys::KeyAction,
+    pane::Pane,
+    ui::theme::{GlobalTheme, Theme},
+};
 
 #[derive(Debug, Default, Clone)]
 pub enum PaneType {
@@ -19,36 +24,40 @@ pub enum Movement {
     Left,
     Right,
 }
+
 pub enum Actions {
     MoveRelative(Movement),
-    InputMode,
 }
 
 pub struct App<'a> {
     pub requests_list: RequestsList<&'a str>,
     pub right_state: RightState,
+    pub theme: GlobalTheme,
     active_pane_type: PaneType,
 }
 
 impl<'a> App<'a> {
-    pub fn new() -> App<'a> {
+    pub fn new(theme: Theme) -> App<'a> {
+        let theme = Rc::new(theme);
         let requests_list = RequestsList::new(vec!["Request 1", "Request 2", "Request 3"]);
-        let right_state = RightState::default();
-        App {
+        let right_state = RightState::new(theme.clone());
+
+        let mut app = App {
             requests_list,
             right_state,
             active_pane_type: PaneType::RequestList,
-        }
+            theme,
+        };
+        app.active_pane().set_active(true);
+        app
     }
 
     pub fn handle_key_event(&mut self, key: KeyEvent) {
         if let Some(action) = self.active_pane().handle_key(KeyAction::from(key)) {
             if let Actions::MoveRelative(dir) = action {
-                dbg!(&dir);
                 self.active_pane().set_active(false);
                 if let Some(pane) = self.active_pane().relative_pane(dir) {
                     self.active_pane_type = pane;
-                    dbg!(&self.active_pane_type);
                 }
                 self.active_pane().set_active(true);
             }

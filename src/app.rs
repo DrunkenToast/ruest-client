@@ -25,8 +25,20 @@ pub enum Movement {
     Right,
 }
 
+/// Possible input modes
+/// these mode are used to determine wich keybinds are active
+#[derive(Debug, Copy, Clone)]
+pub enum InputMode {
+    /// All "normal" keybinds are active
+    Normal,
+
+    /// Only keybinds for existing insert mode are active
+    Editing,
+}
+
 pub enum Actions {
     MoveRelative(Movement),
+    InputMode(InputMode),
 }
 
 pub struct App<'a> {
@@ -55,22 +67,23 @@ impl<'a> App<'a> {
     pub fn handle_key_event(&mut self, key: KeyEvent) {
         if let Some(action) = self.active_pane().handle_key(KeyAction::from(key)) {
             if let Actions::MoveRelative(dir) = action {
-                self.active_pane().set_active(false);
                 if let Some(pane) = self.active_pane().relative_pane(dir) {
-                    self.active_pane_type = pane;
+                    self.activate_pane(pane);
                 }
-                self.active_pane().set_active(true);
             }
         }
     }
 
     pub fn active_pane(&mut self) -> &mut dyn Pane {
         match self.active_pane_type {
-            PaneType::RequestList => &mut self.requests_list,
-            PaneType::Right(pane) => match pane {
-                RightStatePane::Request => &mut self.right_state.request_state,
-                RightStatePane::Response => &mut self.right_state.response_state,
-            },
+            PaneType::RequestList => self.requests_list.active_pane(&self.active_pane_type),
+            PaneType::Right(_) => self.right_state.active_pane(&self.active_pane_type),
         }
+    }
+
+    fn activate_pane(&mut self, pane: PaneType) {
+        self.active_pane().set_active(false);
+        self.active_pane_type = pane;
+        self.active_pane().set_active(true);
     }
 }

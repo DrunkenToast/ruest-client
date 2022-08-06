@@ -50,9 +50,16 @@ impl<T: Copy> Pane for RequestsList<T> {
         match dir {
             Movement::Up => None,
             Movement::Down => None,
+            // NOTE: Is left and right not both RequestList
             Movement::Left => Some(PaneType::Right(RightStatePane::Response)),
             Movement::Right => Some(PaneType::Right(RightStatePane::Request)),
         }
+    }
+
+    fn active_pane(&mut self, pane: &PaneType) -> &mut dyn Pane {
+        debug_assert!(matches!(pane, PaneType::RequestList));
+
+        self
     }
 }
 

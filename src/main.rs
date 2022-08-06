@@ -1,10 +1,10 @@
+use std::{error::Error, io};
+
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use keys::GlobalKeyAction;
-use std::{error::Error, io};
 use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
@@ -12,6 +12,8 @@ use tui::{
 
 use app::App;
 use ui::{theme::Theme, ui};
+
+use keys::GlobalKeyAction;
 
 mod app;
 mod keys;

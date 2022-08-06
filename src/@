@@ -1,0 +1,8 @@
+use crossterm::event::KeyEvent;
+
+
+pub trait Component {
+    fn handle_key(&mut self, key_event: KeyEvent) {
+
+    }
+}

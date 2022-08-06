@@ -4,23 +4,27 @@ use tui::{
     widgets::StatefulWidget,
 };
 
-use request::{Request, RequestState};
-use response::{Response, ResponseState};
+use crate::{app::PaneType, pane::Pane};
 
 use super::theme::GlobalTheme;
+
+use request::{Request, RequestState};
+use response::{Response, ResponseState};
 
 mod request;
 mod response;
 
 #[derive(Debug)]
 pub struct RightState {
+    pub active: bool,
     pub request_state: RequestState,
     pub response_state: ResponseState,
     // pub local_pane: RightStatePane,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub enum RightStatePane {
+    #[default]
     Request,
     Response,
 }
@@ -33,6 +37,7 @@ impl RightState {
         Self {
             request_state: RequestState::new(theme.clone()),
             response_state: ResponseState::new(theme),
+            active: false,
         }
     }
 }
@@ -53,5 +58,26 @@ impl StatefulWidget for Right {
             buf,
             &mut state.response_state,
         );
+    }
+}
+
+impl Pane for RightState {
+    fn active_pane(&mut self, pane: &crate::app::PaneType) -> &mut dyn Pane {
+        if let PaneType::Right(pane) = pane {
+            match pane {
+                RightStatePane::Request => &mut self.request_state,
+                RightStatePane::Response => &mut self.response_state,
+            }
+        } else {
+            unreachable!();
+        }
+    }
+
+    fn active(&self) -> bool {
+        self.active
+    }
+
+    fn set_active(&mut self, active: bool) {
+        self.active = active;
     }
 }

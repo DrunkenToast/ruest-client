@@ -52,6 +52,12 @@ impl Pane for RequestState {
     fn set_active(&mut self, active: bool) {
         self.active = active
     }
+
+    fn active_pane(&mut self, _pane: &PaneType) -> &mut dyn Pane {
+        debug_assert!(matches!(PaneType::Right(RightStatePane::Request), _pane));
+
+        self
+    }
 }
 
 impl RequestState {

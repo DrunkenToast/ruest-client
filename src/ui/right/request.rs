@@ -1,5 +1,3 @@
-use std::string;
-
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
     buffer::Buffer,
@@ -25,7 +23,6 @@ pub struct RequestState {
     input_mode: InputMode,
     // NOTE: maybe replace with Vec<Char>
     hostname: String,
-    cursor: (u16, u16),
 }
 
 impl Pane for RequestState {
@@ -107,7 +104,6 @@ impl RequestState {
             active: false,
             input_mode: InputMode::Normal,
             hostname: String::from("localhost"),
-            cursor: (0, 0),
         }
     }
 

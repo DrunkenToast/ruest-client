@@ -40,8 +40,6 @@ pub enum InputMode {
 #[derive(Debug)]
 pub enum Actions {
     MoveRelative(Movement),
-    DrawCursor((u16, u16)),
-    RemoveCursor,
 }
 
 pub struct App<'a> {

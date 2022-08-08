@@ -3,14 +3,15 @@ use std::rc::Rc;
 use super::ui::{requests_list::RequestsList, right::RightState};
 use crossterm::event::KeyEvent;
 
-use crate::ui::right::RightStatePane;
 use crate::{
-    keys::KeyAction,
     pane::Pane,
-    ui::theme::{GlobalTheme, Theme},
+    ui::{
+        right::RightStatePane,
+        theme::{GlobalTheme, Theme},
+    },
 };
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub enum PaneType {
     #[default]
     RequestList,
@@ -25,6 +26,18 @@ pub enum Movement {
     Right,
 }
 
+/// Possible input modes
+/// these mode are used to determine wich keybinds are active
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum InputMode {
+    /// All "normal" keybinds are active
+    Normal,
+
+    /// Only keybinds for existing insert mode are active
+    Editing,
+}
+
+#[derive(Debug)]
 pub enum Actions {
     MoveRelative(Movement),
 }
@@ -52,25 +65,29 @@ impl<'a> App<'a> {
         app
     }
 
-    pub fn handle_key_event(&mut self, key: KeyEvent) {
-        if let Some(action) = self.active_pane().handle_key(KeyAction::from(key)) {
+    pub fn handle_key_event(&mut self, key_event: KeyEvent) {
+        if let Some(action) = self.active_pane().handle_key(key_event) {
             if let Actions::MoveRelative(dir) = action {
-                self.active_pane().set_active(false);
+                // TODO: move .relative_pane() into .handle_key()
                 if let Some(pane) = self.active_pane().relative_pane(dir) {
-                    self.active_pane_type = pane;
+                    self.activate_pane(pane);
                 }
-                self.active_pane().set_active(true);
             }
         }
     }
 
     pub fn active_pane(&mut self) -> &mut dyn Pane {
         match self.active_pane_type {
-            PaneType::RequestList => &mut self.requests_list,
-            PaneType::Right(pane) => match pane {
-                RightStatePane::Request => &mut self.right_state.request_state,
-                RightStatePane::Response => &mut self.right_state.response_state,
-            },
+            PaneType::RequestList => self.requests_list.active_pane(&self.active_pane_type),
+            PaneType::Right(_) => self.right_state.active_pane(&self.active_pane_type),
+        }
+    }
+
+    fn activate_pane(&mut self, pane: PaneType) {
+        if self.active_pane_type != pane {
+            self.active_pane().set_active(false);
+            self.active_pane_type = pane;
+            self.active_pane().set_active(true);
         }
     }
 }

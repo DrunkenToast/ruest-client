@@ -1,3 +1,4 @@
+use crossterm::event::KeyEvent;
 use tui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
@@ -7,7 +8,7 @@ use tui::{
 
 use crate::{
     app::{Actions, Movement, PaneType},
-    keys::KeyAction,
+    keys::NormalKeyAction,
     pane::Pane,
     ui::theme::GlobalTheme,
 };
@@ -23,13 +24,13 @@ pub struct ResponseState {
 }
 
 impl Pane for ResponseState {
-    fn handle_key(&mut self, key: KeyAction) -> Option<Actions> {
-        match key {
-            KeyAction::PrevTab => {
+    fn handle_key(&mut self, key_event: KeyEvent) -> Option<Actions> {
+        match NormalKeyAction::from(key_event) {
+            NormalKeyAction::PrevTab => {
                 self.prev();
                 None
             }
-            KeyAction::NextTab => {
+            NormalKeyAction::NextTab => {
                 self.next();
                 None
             }
@@ -52,6 +53,12 @@ impl Pane for ResponseState {
 
     fn set_active(&mut self, active: bool) {
         self.active = active
+    }
+
+    fn active_pane(&mut self, _pane: &PaneType) -> &mut dyn Pane {
+        debug_assert!(matches!(PaneType::Right(RightStatePane::Response), _pane));
+
+        self
     }
 }
 
@@ -78,9 +85,25 @@ impl ResponseState {
 
         self.tab_index = index;
     }
+
+    pub fn handle_key(&mut self, key: NormalKeyAction) -> Option<Actions> {
+        match key {
+            NormalKeyAction::PrevTab => {
+                self.prev();
+                None
+            }
+            NormalKeyAction::NextTab => {
+                self.next();
+                None
+            }
+            NormalKeyAction::Accept => None,
+            key => key.relative_or_none(),
+        }
+    }
 }
+
 #[derive(Default)]
-pub struct Response {}
+pub struct Response;
 
 impl Response {
     const OPTIONS: &'static [&'static str] = &["Content", "Headers", "Cookies"];

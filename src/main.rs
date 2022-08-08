@@ -1,16 +1,17 @@
+use std::{error::Error, io};
+
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use keys::GlobalKeyAction;
-use std::{error::Error, io};
 use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
 
-use app::App;
+use app::{App, InputMode};
+use keys::GlobalKeyAction;
 use ui::{theme::Theme, ui};
 
 mod app;
@@ -50,12 +51,17 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
     loop {
         terminal.draw(|f| ui(f, &mut app))?;
 
+        // TODO: only redraw when an event changed something
         if let Event::Key(key) = event::read()? {
             // Global keys
-            match GlobalKeyAction::from(key) {
-                GlobalKeyAction::Quit => return Ok(()),
-                GlobalKeyAction::ToggleRequestList => app.requests_list.toggle_visible(),
-                _ => app.handle_key_event(key),
+            if app.active_pane().input_mode() != InputMode::Editing {
+                match GlobalKeyAction::from(key) {
+                    GlobalKeyAction::Quit => return Ok(()),
+                    GlobalKeyAction::ToggleRequestList => app.requests_list.toggle_visible(),
+                    _ => app.handle_key_event(key),
+                }
+            } else {
+                app.handle_key_event(key)
             }
         }
     }

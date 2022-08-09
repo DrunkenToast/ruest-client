@@ -7,7 +7,8 @@ use tui::{
 };
 
 use crate::{
-    app::{Actions, Movement, PaneType},
+    app::{Action, Movement, PaneType},
+    component::Component,
     keys::NormalKeyAction,
     pane::Pane,
     ui::theme::GlobalTheme,
@@ -23,8 +24,8 @@ pub struct ResponseState {
     active: bool,
 }
 
-impl Pane for ResponseState {
-    fn handle_key(&mut self, key_event: KeyEvent) -> Option<Actions> {
+impl Component for ResponseState {
+    fn handle_key(&mut self, key_event: KeyEvent) -> Option<Action> {
         match NormalKeyAction::from(key_event) {
             NormalKeyAction::PrevTab => {
                 self.prev();
@@ -38,6 +39,16 @@ impl Pane for ResponseState {
         }
     }
 
+    fn active(&self) -> bool {
+        self.active
+    }
+
+    fn set_active(&mut self, active: bool) {
+        self.active = active
+    }
+}
+
+impl Pane for ResponseState {
     fn relative_pane(&self, dir: crate::app::Movement) -> Option<PaneType> {
         match dir {
             Movement::Up => None,
@@ -45,14 +56,6 @@ impl Pane for ResponseState {
             Movement::Left => Some(PaneType::Right(RightStatePane::Request)),
             Movement::Right => Some(PaneType::RequestList),
         }
-    }
-
-    fn active(&self) -> bool {
-        self.active
-    }
-
-    fn set_active(&mut self, active: bool) {
-        self.active = active
     }
 
     fn active_pane(&mut self, _pane: &PaneType) -> &mut dyn Pane {
@@ -86,7 +89,7 @@ impl ResponseState {
         self.tab_index = index;
     }
 
-    pub fn handle_key(&mut self, key: NormalKeyAction) -> Option<Actions> {
+    pub fn handle_key(&mut self, key: NormalKeyAction) -> Option<Action> {
         match key {
             NormalKeyAction::PrevTab => {
                 self.prev();

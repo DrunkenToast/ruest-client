@@ -6,7 +6,7 @@ use tui::{
     Frame,
 };
 
-use crate::pane::Pane;
+use crate::component::Component;
 
 use super::app::App;
 
@@ -31,7 +31,7 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
             .requests_list
             .items
             .iter()
-            .map(|i| ListItem::new(Spans::from(i.as_ref())))
+            .map(|&i| ListItem::new(Spans::from(i)))
             .collect();
 
         let title = app.requests_list.selected().unwrap_or("None selected");

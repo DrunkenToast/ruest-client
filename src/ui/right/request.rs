@@ -8,6 +8,7 @@ use tui::{
 
 use crate::{
     app::{Actions, InputMode, Movement, PaneType},
+    component::input_line,
     keys::NormalKeyAction,
     pane::Pane,
     ui::theme::GlobalTheme,
@@ -15,20 +16,21 @@ use crate::{
 
 use super::RightStatePane;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct RequestState {
     tab_index: usize,
     active: bool,
     theme: GlobalTheme,
     input_mode: InputMode,
+    input_line: Option<input_line::InputLineComponent>,
     // NOTE: maybe replace with Vec<Char>
     hostname: String,
 }
 
 impl Pane for RequestState {
     fn handle_key(&mut self, key_event: KeyEvent) -> Option<Actions> {
-        match self.input_mode {
-            InputMode::Normal => match NormalKeyAction::from(key_event) {
+        match &mut self.input_line {
+            None => match NormalKeyAction::from(key_event) {
                 NormalKeyAction::PrevTab => {
                     self.prev();
                     None
@@ -39,26 +41,21 @@ impl Pane for RequestState {
                 }
                 NormalKeyAction::InsertMode => {
                     self.input_mode = InputMode::Editing;
+                    self.input_line = Some(input_line::InputLineComponent::new(self.hostname.clone()));
                     None
                 }
                 key => key.relative_or_none(),
             },
-            InputMode::Editing => match key_event.code {
-                KeyCode::Enter => {
+            Some(input_line) => match input_line.handle_input(key_event) {
+                input_line::InputResult::Accepted => {
+                    self.hostname = input_line.value.clone();
+                    self.input_line = None;
                     self.input_mode = InputMode::Normal;
                     None
                 }
-                KeyCode::Backspace => {
-                    // TODO: maybe a beep sound or flast when this erorrs
-                    _ = self.hostname.pop().is_some();
-                    None
-                }
-                KeyCode::Esc => {
+                input_line::InputResult::Canceled => {
+                    self.input_line = None;
                     self.input_mode = InputMode::Normal;
-                    None
-                }
-                KeyCode::Char(char) => {
-                    self.hostname.push(char);
                     None
                 }
                 _ => None,
@@ -103,6 +100,7 @@ impl RequestState {
             theme,
             active: false,
             input_mode: InputMode::Normal,
+            input_line: None,
             hostname: String::from("localhost"),
         }
     }
@@ -151,7 +149,13 @@ impl StatefulWidget for Request {
             )
             .split(request_area);
 
-        let paragraph_hostname = Paragraph::new(state.hostname.as_str())
+        let hostname = if let Some(ref input_line) = state.input_line {
+            input_line.value.as_str()
+        } else {
+            state.hostname.as_str()
+        };
+
+        let paragraph_hostname = Paragraph::new(hostname)
             .style(state.theme.hostname())
             .alignment(Alignment::Left)
             .wrap(Wrap { trim: true });

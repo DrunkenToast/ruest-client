@@ -15,6 +15,7 @@ use keys::GlobalKeyAction;
 use ui::{theme::Theme, ui};
 
 mod app;
+mod component;
 mod keys;
 mod pane;
 mod ui;

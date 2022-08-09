@@ -1,14 +1,17 @@
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::KeyEvent;
 use tui::{
     buffer::Buffer,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     text::Spans,
-    widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
+    widgets::{Block, Borders, StatefulWidget, Tabs, Widget},
 };
 
 use crate::{
-    app::{Actions, InputMode, Movement, PaneType},
-    component::input_line,
+    app::{Action, InputMode, Movement, PaneType},
+    component::{
+        input_line::{self, InputLine, InputLineState},
+        Component,
+    },
     keys::NormalKeyAction,
     pane::Pane,
     ui::theme::GlobalTheme,
@@ -21,16 +24,13 @@ pub struct RequestState {
     tab_index: usize,
     active: bool,
     theme: GlobalTheme,
-    input_mode: InputMode,
-    input_line: Option<input_line::InputLineComponent>,
-    // NOTE: maybe replace with Vec<Char>
-    hostname: String,
+    hostname_input_state: input_line::InputLineState,
 }
 
-impl Pane for RequestState {
-    fn handle_key(&mut self, key_event: KeyEvent) -> Option<Actions> {
-        match &mut self.input_line {
-            None => match NormalKeyAction::from(key_event) {
+impl Component for RequestState {
+    fn handle_key(&mut self, key_event: KeyEvent) -> Option<Action> {
+        match &mut self.hostname_input_state.input_mode() {
+            InputMode::Normal => match NormalKeyAction::from(key_event) {
                 NormalKeyAction::PrevTab => {
                     self.prev();
                     None
@@ -40,42 +40,20 @@ impl Pane for RequestState {
                     None
                 }
                 NormalKeyAction::InsertMode => {
-                    self.input_mode = InputMode::Editing;
-                    self.input_line = Some(input_line::InputLineComponent::new(self.hostname.clone()));
+                    self.hostname_input_state.set_input_mode(InputMode::Editing);
                     None
                 }
                 key => key.relative_or_none(),
             },
-            Some(input_line) => match input_line.handle_input(key_event) {
-                input_line::InputResult::Accepted => {
-                    self.hostname = input_line.value.clone();
-                    self.input_line = None;
-                    self.input_mode = InputMode::Normal;
+            InputMode::Editing => match self.hostname_input_state.handle_key(key_event) {
+                Some(Action::InputResult(input_line::InputResult::Accepted)) => {
+                    //TODO: Do stuff here B)
                     None
                 }
-                input_line::InputResult::Canceled => {
-                    self.input_line = None;
-                    self.input_mode = InputMode::Normal;
-                    None
-                }
+                Some(Action::InputResult(input_line::InputResult::Canceled)) => None,
                 _ => None,
             },
         }
-    }
-
-    fn relative_pane(&self, dir: crate::app::Movement) -> Option<PaneType> {
-        match dir {
-            Movement::Up => None,
-            Movement::Down => None,
-            Movement::Left => Some(PaneType::RequestList),
-            Movement::Right => Some(PaneType::Right(RightStatePane::Response)),
-        }
-    }
-
-    fn active_pane(&mut self, _pane: &PaneType) -> &mut dyn Pane {
-        debug_assert!(matches!(PaneType::Right(RightStatePane::Request), _pane));
-
-        self
     }
 
     fn active(&self) -> bool {
@@ -88,7 +66,23 @@ impl Pane for RequestState {
 
     #[inline(always)]
     fn input_mode(&self) -> InputMode {
-        self.input_mode
+        self.hostname_input_state.input_mode()
+    }
+}
+
+impl Pane for RequestState {
+    fn relative_pane(&self, dir: crate::app::Movement) -> Option<PaneType> {
+        match dir {
+            Movement::Up => None,
+            Movement::Down => None,
+            Movement::Left => Some(PaneType::RequestList),
+            Movement::Right => Some(PaneType::Right(RightStatePane::Response)),
+        }
+    }
+
+    fn active_pane(&mut self, _pane: &PaneType) -> &mut dyn Pane {
+        debug_assert!(matches!(PaneType::Right(RightStatePane::Request), _pane));
+        self
     }
 }
 
@@ -97,11 +91,9 @@ impl RequestState {
     pub fn new(theme: GlobalTheme) -> Self {
         Self {
             tab_index: 0,
+            hostname_input_state: InputLineState::new("localhost".to_string(), theme.clone()),
             theme,
             active: false,
-            input_mode: InputMode::Normal,
-            input_line: None,
-            hostname: String::from("localhost"),
         }
     }
 
@@ -115,7 +107,6 @@ impl RequestState {
 
     pub fn select(&mut self, index: usize) {
         assert!(index < Self::TAB_LEN);
-
         self.tab_index = index;
     }
 }
@@ -149,17 +140,6 @@ impl StatefulWidget for Request {
             )
             .split(request_area);
 
-        let hostname = if let Some(ref input_line) = state.input_line {
-            input_line.value.as_str()
-        } else {
-            state.hostname.as_str()
-        };
-
-        let paragraph_hostname = Paragraph::new(hostname)
-            .style(state.theme.hostname())
-            .alignment(Alignment::Left)
-            .wrap(Wrap { trim: true });
-
         let titles = Self::OPTIONS.iter().cloned().map(Spans::from).collect();
 
         let tabs = Tabs::new(titles)
@@ -172,7 +152,12 @@ impl StatefulWidget for Request {
             .borders(Borders::ALL)
             .style(state.theme.block(state.active()));
 
-        paragraph_hostname.render(chunks[0], buf);
+        StatefulWidget::render(
+            InputLine::default(),
+            chunks[0],
+            buf,
+            &mut state.hostname_input_state,
+        );
         tabs.render(chunks[1], buf);
         inner.render(chunks[2], buf);
     }

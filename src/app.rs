@@ -1,59 +1,93 @@
+use std::rc::Rc;
+
 use super::ui::{requests_list::RequestsList, right::RightState};
 use crossterm::event::KeyEvent;
 
-use crate::keys::KeyAction;
+use crate::{
+    pane::Pane,
+    ui::{
+        right::RightStatePane,
+        theme::{GlobalTheme, Theme},
+    },
+};
 
-#[derive(Debug, Default, Clone)]
-pub enum Pane {
+#[derive(Debug, Default, Clone, PartialEq)]
+pub enum PaneType {
     #[default]
     RequestList,
-    Request,
-    Response,
-    Collections,
-    Relative(RelativePane),
+    Right(RightStatePane),
 }
 
-#[derive(Debug, Clone)]
-pub enum RelativePane {
+#[derive(Debug, Copy, Clone)]
+pub enum Movement {
     Up,
     Down,
     Left,
     Right,
 }
 
-#[derive(Debug)]
-pub struct App<'r> {
-    pub requests_list: RequestsList<&'r str>,
-    pub right_state: RightState,
-    pub active_pane: Pane,
+/// Possible input modes
+/// these mode are used to determine wich keybinds are active
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum InputMode {
+    /// All "normal" keybinds are active
+    Normal,
+
+    /// Only keybinds for existing insert mode are active
+    Editing,
 }
 
-impl<'r> App<'r> {
-    pub fn new() -> App<'r> {
-        App {
-            requests_list: RequestsList::new(vec!["Request 1", "Request 2", "Request 3"]),
-            right_state: RightState::default(),
-            active_pane: Pane::RequestList,
+#[derive(Debug)]
+pub enum Actions {
+    MoveRelative(Movement),
+}
+
+pub struct App<'a> {
+    pub requests_list: RequestsList<&'a str>,
+    pub right_state: RightState,
+    pub theme: GlobalTheme,
+    active_pane_type: PaneType,
+}
+
+impl<'a> App<'a> {
+    pub fn new(theme: Theme) -> App<'a> {
+        let theme = Rc::new(theme);
+        let requests_list = RequestsList::new(vec!["Request 1", "Request 2", "Request 3"]);
+        let right_state = RightState::new(theme.clone());
+
+        let mut app = App {
+            requests_list,
+            right_state,
+            active_pane_type: PaneType::RequestList,
+            theme,
+        };
+        app.active_pane().set_active(true);
+        app
+    }
+
+    pub fn handle_key_event(&mut self, key_event: KeyEvent) {
+        if let Some(action) = self.active_pane().handle_key(key_event) {
+            if let Actions::MoveRelative(dir) = action {
+                // TODO: move .relative_pane() into .handle_key()
+                if let Some(pane) = self.active_pane().relative_pane(dir) {
+                    self.activate_pane(pane);
+                }
+            }
         }
     }
 
-    pub fn handle_key_event(&mut self, key: KeyEvent) {
-        if let Some(pane) = match self.active_pane {
-            Pane::RequestList => self.requests_list.handle_key(KeyAction::from(key)),
-            Pane::Request => self
-                .right_state
-                .request_state
-                .handle_key(KeyAction::from(key)),
-            Pane::Response => self
-                .right_state
-                .response_state
-                .handle_key(KeyAction::from(key)),
-            _ => None,
-        } {
-            match pane {
-                Pane::Relative(_) => {}
-                pane => self.active_pane = pane,
-            }
+    pub fn active_pane(&mut self) -> &mut dyn Pane {
+        match self.active_pane_type {
+            PaneType::RequestList => self.requests_list.active_pane(&self.active_pane_type),
+            PaneType::Right(_) => self.right_state.active_pane(&self.active_pane_type),
+        }
+    }
+
+    fn activate_pane(&mut self, pane: PaneType) {
+        if self.active_pane_type != pane {
+            self.active_pane().set_active(false);
+            self.active_pane_type = pane;
+            self.active_pane().set_active(true);
         }
     }
 }

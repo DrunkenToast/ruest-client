@@ -13,6 +13,7 @@ mod requests_list;
 mod right;
 
 pub fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
+    let theme = Rc::new(Theme::default())
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(if app.requests {

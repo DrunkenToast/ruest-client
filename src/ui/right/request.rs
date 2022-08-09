@@ -1,20 +1,111 @@
+use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
-    text::{Span, Spans},
+    text::Spans,
     widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
 };
 
-use crate::{app::Pane, keys::KeyAction};
+use crate::{
+    app::{Actions, InputMode, Movement, PaneType},
+    keys::NormalKeyAction,
+    pane::Pane,
+    ui::theme::GlobalTheme,
+};
 
-#[derive(Debug, Clone, Default)]
+use super::RightStatePane;
+
+#[derive(Debug, Clone)]
 pub struct RequestState {
     tab_index: usize,
+    active: bool,
+    theme: GlobalTheme,
+    input_mode: InputMode,
+    // NOTE: maybe replace with Vec<Char>
+    hostname: String,
+}
+
+impl Pane for RequestState {
+    fn handle_key(&mut self, key_event: KeyEvent) -> Option<Actions> {
+        match self.input_mode {
+            InputMode::Normal => match NormalKeyAction::from(key_event) {
+                NormalKeyAction::PrevTab => {
+                    self.prev();
+                    None
+                }
+                NormalKeyAction::NextTab => {
+                    self.next();
+                    None
+                }
+                NormalKeyAction::InsertMode => {
+                    self.input_mode = InputMode::Editing;
+                    None
+                }
+                key => key.relative_or_none(),
+            },
+            InputMode::Editing => match key_event.code {
+                KeyCode::Enter => {
+                    self.input_mode = InputMode::Normal;
+                    None
+                }
+                KeyCode::Backspace => {
+                    // TODO: maybe a beep sound or flast when this erorrs
+                    _ = self.hostname.pop().is_some();
+                    None
+                }
+                KeyCode::Esc => {
+                    self.input_mode = InputMode::Normal;
+                    None
+                }
+                KeyCode::Char(char) => {
+                    self.hostname.push(char);
+                    None
+                }
+                _ => None,
+            },
+        }
+    }
+
+    fn relative_pane(&self, dir: crate::app::Movement) -> Option<PaneType> {
+        match dir {
+            Movement::Up => None,
+            Movement::Down => None,
+            Movement::Left => Some(PaneType::RequestList),
+            Movement::Right => Some(PaneType::Right(RightStatePane::Response)),
+        }
+    }
+
+    fn active_pane(&mut self, _pane: &PaneType) -> &mut dyn Pane {
+        debug_assert!(matches!(PaneType::Right(RightStatePane::Request), _pane));
+
+        self
+    }
+
+    fn active(&self) -> bool {
+        self.active
+    }
+
+    fn set_active(&mut self, active: bool) {
+        self.active = active
+    }
+
+    #[inline(always)]
+    fn input_mode(&self) -> InputMode {
+        self.input_mode
+    }
 }
 
 impl RequestState {
     const TAB_LEN: usize = Request::OPTIONS.len();
+    pub fn new(theme: GlobalTheme) -> Self {
+        Self {
+            tab_index: 0,
+            theme,
+            active: false,
+            input_mode: InputMode::Normal,
+            hostname: String::from("localhost"),
+        }
+    }
 
     pub fn next(&mut self) {
         self.tab_index = (self.tab_index + 1) % Self::TAB_LEN;
@@ -29,51 +120,24 @@ impl RequestState {
 
         self.tab_index = index;
     }
-
-    pub fn handle_key(&mut self, key: KeyAction) -> Option<Pane> {
-        match key {
-            KeyAction::PrevTab => {
-                self.prev();
-                None
-            }
-            KeyAction::NextTab => {
-                self.next();
-                None
-            }
-            KeyAction::Accept => None,
-            KeyAction::MoveLeft => Some(Pane::RequestList),
-            KeyAction::MoveRight => Some(Pane::Response),
-            key => key.relative_or_none(),
-        }
-    }
 }
 
-#[derive(Default, Clone)]
-pub struct Request<'b> {
-    block: Option<Block<'b>>,
-}
+#[derive(Clone, Default)]
+pub struct Request {}
 
-impl<'b> Request<'b> {
+impl Request {
     const OPTIONS: &'static [&'static str] = &["Query", "Headers", "Auth", "Body"];
-
-    pub fn block(mut self, block: Block<'b>) -> Request<'b> {
-        self.block = Some(block);
-        self
-    }
 }
 
-impl<'b> StatefulWidget for Request<'b> {
+impl StatefulWidget for Request {
     type State = RequestState;
-
-    fn render(mut self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let request_area = match self.block.take() {
-            Some(b) => {
-                let inner_area = b.inner(area);
-                b.render(area, buf);
-                inner_area
-            }
-            None => area,
-        };
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+        let block = Block::default()
+            .title("Request")
+            .borders(Borders::ALL)
+            .style(state.theme.block(state.active));
+        let request_area = block.inner(area);
+        block.render(area, buf);
 
         let chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -87,52 +151,25 @@ impl<'b> StatefulWidget for Request<'b> {
             )
             .split(request_area);
 
-        let paragraph_hostname = Paragraph::new("HOSTNAME")
-            .style(Style::default().fg(Color::White).bg(Color::Black))
-            .alignment(Alignment::Center)
+        let paragraph_hostname = Paragraph::new(state.hostname.as_str())
+            .style(state.theme.hostname())
+            .alignment(Alignment::Left)
             .wrap(Wrap { trim: true });
 
-        let titles = Self::OPTIONS
-            .iter()
-            .cloned()
-            .map(|t| Spans::from(Span::styled(t, Style::default().fg(Color::Green))))
-            .collect();
+        let titles = Self::OPTIONS.iter().cloned().map(Spans::from).collect();
 
         let tabs = Tabs::new(titles)
-            .block(Block::default().borders(Borders::ALL).title("Tabs"))
+            .block(Block::default().borders(Borders::ALL))
             .select(state.tab_index)
-            .style(Style::default().fg(Color::Cyan))
-            .highlight_style(
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .bg(Color::Black),
-            );
+            .highlight_style(state.theme.selected());
 
-        let inner = match state.tab_index {
-            0 => Block::default()
-                .title(Self::OPTIONS[0])
-                .borders(Borders::ALL),
-            1 => Block::default()
-                .title(Self::OPTIONS[1])
-                .borders(Borders::ALL),
-            2 => Block::default()
-                .title(Self::OPTIONS[2])
-                .borders(Borders::ALL),
-            3 => Block::default()
-                .title(Self::OPTIONS[3])
-                .borders(Borders::ALL),
-            _ => unreachable!(),
-        };
+        let inner = Block::default()
+            .title(Self::OPTIONS[state.tab_index])
+            .borders(Borders::ALL)
+            .style(state.theme.block(state.active()));
 
         paragraph_hostname.render(chunks[0], buf);
         tabs.render(chunks[1], buf);
         inner.render(chunks[2], buf);
-    }
-}
-
-impl Widget for Request<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        let mut state = RequestState::default();
-        StatefulWidget::render(self, area, buf, &mut state);
     }
 }

@@ -1,14 +1,67 @@
+use crossterm::event::KeyEvent;
 use tui::widgets::ListState;
 
-use crate::keys::KeyAction;
+use crate::{
+    app::{Actions, Movement, PaneType},
+    keys::NormalKeyAction,
+    pane::Pane,
+};
 
-use super::super::Pane;
+use super::right::RightStatePane;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 pub struct RequestsList<T: Copy> {
     pub items: Vec<T>,
     pub state: ListState,
+    active: bool,
     visible: bool,
+}
+
+impl<T: Copy> Pane for RequestsList<T> {
+    fn handle_key(&mut self, key_event: KeyEvent) -> Option<Actions> {
+        match NormalKeyAction::from(key_event) {
+            NormalKeyAction::Accept | NormalKeyAction::MoveRight => {
+                Some(Actions::MoveRelative(Movement::Right))
+            }
+            NormalKeyAction::MoveUp => {
+                self.previous();
+                None
+            }
+            NormalKeyAction::MoveDown => {
+                self.next();
+                None
+            }
+            NormalKeyAction::PrevTab => {
+                self.next();
+                None
+            }
+            key => key.relative_or_none(),
+        }
+    }
+
+    fn relative_pane(&self, dir: crate::app::Movement) -> Option<PaneType> {
+        match dir {
+            Movement::Up => None,
+            Movement::Down => None,
+            // NOTE: Is left and right not both RequestList
+            Movement::Left => Some(PaneType::Right(RightStatePane::Response)),
+            Movement::Right => Some(PaneType::Right(RightStatePane::Request)),
+        }
+    }
+
+    fn active_pane(&mut self, pane: &PaneType) -> &mut dyn Pane {
+        debug_assert!(matches!(pane, PaneType::RequestList));
+
+        self
+    }
+
+    fn active(&self) -> bool {
+        self.active
+    }
+
+    fn set_active(&mut self, active: bool) {
+        self.active = active
+    }
 }
 
 impl<T: Copy> RequestsList<T> {
@@ -17,6 +70,7 @@ impl<T: Copy> RequestsList<T> {
             items,
             state: ListState::default(),
             visible: true,
+            active: false,
         }
     }
 
@@ -56,25 +110,6 @@ impl<T: Copy> RequestsList<T> {
             None => 0,
         };
         self.state.select(Some(i));
-    }
-
-    pub fn handle_key(&mut self, key: KeyAction) -> Option<Pane> {
-        match key {
-            KeyAction::NextTab | KeyAction::Accept | KeyAction::MoveRight => Some(Pane::Request),
-            KeyAction::MoveUp => {
-                self.previous();
-                None
-            }
-            KeyAction::MoveDown => {
-                self.next();
-                None
-            }
-            KeyAction::PrevTab => {
-                self.next();
-                None
-            }
-            key => key.relative_or_none(),
-        }
     }
 
     pub fn visible(&self) -> bool {

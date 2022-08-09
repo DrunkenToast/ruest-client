@@ -1,6 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use crate::app::{Pane, RelativePane};
+use crate::app::{Actions, Movement};
 
 pub enum GlobalKeyAction {
     Quit,
@@ -9,7 +9,7 @@ pub enum GlobalKeyAction {
     Other,
 }
 
-pub enum KeyAction {
+pub enum NormalKeyAction {
     Exit,
     MoveLeft,
     MoveRight,
@@ -18,20 +18,22 @@ pub enum KeyAction {
     NextTab,
     PrevTab,
     Accept,
+    InsertMode,
     Other,
 }
 
-impl KeyAction {
-    pub fn relative_or_none(self) -> Option<Pane> {
+impl NormalKeyAction {
+    pub fn relative_or_none(self) -> Option<Actions> {
         match self {
-            Self::MoveLeft => Some(Pane::Relative(RelativePane::Left)),
-            Self::MoveRight => Some(Pane::Relative(RelativePane::Right)),
-            Self::MoveUp => Some(Pane::Relative(RelativePane::Up)),
-            Self::MoveDown => Some(Pane::Relative(RelativePane::Down)),
+            Self::MoveLeft => Some(Actions::MoveRelative(Movement::Left)),
+            Self::MoveRight => Some(Actions::MoveRelative(Movement::Right)),
+            Self::MoveUp => Some(Actions::MoveRelative(Movement::Up)),
+            Self::MoveDown => Some(Actions::MoveRelative(Movement::Down)),
             _ => None,
         }
     }
 }
+
 impl From<KeyEvent> for GlobalKeyAction {
     fn from(k: KeyEvent) -> Self {
         match k {
@@ -50,7 +52,7 @@ impl From<KeyEvent> for GlobalKeyAction {
     }
 }
 
-impl From<KeyEvent> for KeyAction {
+impl From<KeyEvent> for NormalKeyAction {
     fn from(k: KeyEvent) -> Self {
         match k {
             KeyEvent {
@@ -74,6 +76,11 @@ impl From<KeyEvent> for KeyAction {
                 code: KeyCode::Down | KeyCode::Char('j'),
                 modifiers: KeyModifiers::NONE,
             } => Self::MoveDown,
+            KeyEvent {
+                code: KeyCode::Char('i'),
+                modifiers: KeyModifiers::NONE,
+            } => Self::InsertMode,
+
             KeyEvent {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,

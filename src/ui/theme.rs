@@ -2,8 +2,6 @@ use std::rc::Rc;
 
 use tui::style::{Color, Modifier, Style};
 
-use crate::app::InputMode;
-
 pub type GlobalTheme = Rc<Theme>;
 
 #[derive(Debug)]
@@ -56,6 +54,20 @@ impl Theme {
 
     pub fn selected(&self) -> Style {
         Style::default().fg(self.selected)
+    }
+
+    pub fn placeholder(&self) -> Style {
+        Style::default()
+            .add_modifier(Modifier::ITALIC)
+            .fg(self.disabled)
+    }
+
+    pub fn hostname(&self) -> Style {
+        Style::default().add_modifier(Modifier::BOLD)
+    }
+
+    pub fn cursor(&self) -> Style {
+        Style::default().bg(Color::White).fg(Color::Black)
     }
 
     pub fn status_code(&self, code: u16) -> Style {

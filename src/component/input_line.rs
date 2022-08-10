@@ -1,12 +1,8 @@
-use crossterm::{
-    event::{KeyCode, KeyEvent, KeyModifiers},
-    style::Stylize,
-};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use tui::{
     layout::Alignment,
-    style::{Color, Style},
     text::{Span, Spans},
-    widgets::{Paragraph, StatefulWidget, Widget, Wrap},
+    widgets::{Paragraph, StatefulWidget, Widget},
 };
 
 use crate::{
@@ -20,6 +16,7 @@ use super::Component;
 pub struct InputLineState {
     pub value: String,
     prev_value: String,
+    placeholder: String,
     active: bool,
     theme: GlobalTheme,
     input_mode: InputMode,
@@ -35,10 +32,11 @@ pub enum InputResult {
 }
 
 impl InputLineState {
-    pub fn new(value: String, theme: GlobalTheme) -> Self {
+    pub fn new(value: String, placeholder: String, theme: GlobalTheme) -> Self {
         Self {
             prev_value: value.clone(),
             value,
+            placeholder,
             theme,
             active: false,
             input_mode: InputMode::Normal,
@@ -73,7 +71,7 @@ impl StatefulWidget for InputLine {
             (InputMode::Normal, _) => Spans::from(Span::raw(state.value.as_str())),
             (InputMode::Editing, 0) => Spans::from(vec![
                 Span::raw(&state.value),
-                Span::styled(" ", Style::default().bg(Color::White)),
+                Span::styled(" ", state.theme.cursor()),
             ]),
             (InputMode::Editing, cursor_offset) => {
                 let offset = state.value.len().saturating_sub(cursor_offset);
@@ -83,16 +81,23 @@ impl StatefulWidget for InputLine {
 
                 Spans::from(vec![
                     Span::raw(left),
-                    Span::styled(cursor, Style::default().fg(Color::Black).bg(Color::White)),
+                    Span::styled(cursor, state.theme.cursor()),
                     Span::raw(right),
                 ])
             }
         };
 
-        Paragraph::new(spans)
-            .alignment(Alignment::Left)
-            //.wrap(Wrap { trim: false }) // NOTE: Removes trailing space even with trim off
-            .render(area, buf);
+        if state.value.is_empty() && state.input_mode() == InputMode::Normal {
+            // Render placeholder
+            Paragraph::new(state.placeholder.as_str())
+                .style(state.theme.placeholder())
+                .render(area, buf);
+        } else {
+            Paragraph::new(spans)
+                .style(state.theme.hostname())
+                .alignment(Alignment::Left)
+                .render(area, buf);
+        }
     }
 }
 

@@ -91,7 +91,11 @@ impl RequestState {
     pub fn new(theme: GlobalTheme) -> Self {
         Self {
             tab_index: 0,
-            hostname_input_state: InputLineState::new("localhost".to_string(), theme.clone()),
+            hostname_input_state: InputLineState::new(
+                "".to_string(),
+                "Enter a hostname".to_string(),
+                theme.clone(),
+            ),
             theme,
             active: false,
         }
@@ -132,7 +136,7 @@ impl StatefulWidget for Request {
             .direction(Direction::Vertical)
             .constraints(
                 [
-                    Constraint::Length(1),
+                    Constraint::Length(3),
                     Constraint::Length(3),
                     Constraint::Min(0),
                 ]
@@ -152,9 +156,16 @@ impl StatefulWidget for Request {
             .borders(Borders::ALL)
             .style(state.theme.block(state.active()));
 
+        let editing = state.hostname_input_state.input_mode() == InputMode::Editing;
+        let hostname_block = Block::default()
+            .borders(Borders::ALL)
+            .style(state.theme.block(editing));
+        let inner_host_area = hostname_block.inner(chunks[0]);
+        hostname_block.render(chunks[0], buf);
+
         StatefulWidget::render(
             InputLine::default(),
-            chunks[0],
+            inner_host_area,
             buf,
             &mut state.hostname_input_state,
         );

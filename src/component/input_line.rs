@@ -264,6 +264,34 @@ impl Component for InputLineState {
 
                 Some(Action::InputResult(InputResult::Changed))
             }
+            KeyEvent {
+                code: KeyCode::Left,
+                modifiers: KeyModifiers::CONTROL,
+            }
+            | KeyEvent {
+                code: KeyCode::Char('b'),
+                modifiers: KeyModifiers::ALT,
+            } => {
+                let offset = self.value.len().saturating_sub(self.cursor_offset);
+
+                self.cursor_offset = if let Some(idx) = self.value[..offset].trim_end().rfind(' ') {
+                    self.value.len() - idx
+                } else {
+                    self.value.len()
+                };
+                Some(Action::InputResult(InputResult::NOOP))
+            }
+            KeyEvent {
+                code: KeyCode::Right,
+                modifiers: KeyModifiers::CONTROL,
+            }
+            | KeyEvent {
+                code: KeyCode::Char('f'),
+                modifiers: KeyModifiers::ALT,
+            } => {
+                    // TODO: Move 1 wort to the right
+                    todo!("I rly dont know rn how to do this");
+            }
             _ => Some(Action::InputResult(InputResult::NOOP)),
         }
     }

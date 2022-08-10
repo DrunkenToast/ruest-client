@@ -5,6 +5,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use http::http_request;
 use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
@@ -19,6 +20,7 @@ mod component;
 mod keys;
 mod pane;
 mod ui;
+mod http;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
@@ -44,6 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if let Err(err) = res {
         println!("{:?}", err)
     }
+
 
     Ok(())
 }

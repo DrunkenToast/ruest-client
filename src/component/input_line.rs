@@ -1,4 +1,4 @@
-use std::{cmp};
+use std::cmp;
 
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
@@ -85,25 +85,22 @@ impl StatefulWidget for InputLine {
             //    Span::raw(state.value.as_str()),
             //    Span::styled(" ", Style::default().bg(Color::White)),
             //]),
-            (InputMode::Editing, 0) => {
-                Spans::from(vec![
-                    Span::raw(&state.value),
-                    Span::styled(" ", Style::default().bg(Color::White)),
-                ])
-            },
+            (InputMode::Editing, 0) => Spans::from(vec![
+                Span::raw(&state.value),
+                Span::styled(" ", Style::default().bg(Color::White)),
+            ]),
             (InputMode::Editing, cursor_offset) => {
-                let offset = std::cmp::max(state.value.len() - cursor_offset, 0);
+                let offset = state.value.len().saturating_sub(cursor_offset);
                 let left = &state.value[..offset];
                 let cursor = &state.value[offset..=offset];
-                let right = &state.value[offset+1..];
+                let right = &state.value[offset + 1..];
 
                 Spans::from(vec![
                     Span::raw(left),
                     Span::styled(cursor, Style::default().bg(Color::White)),
                     Span::raw(right),
                 ])
-            },
-                
+            }
         };
 
         Paragraph::new(spans)
@@ -124,22 +121,29 @@ impl Component for InputLineState {
             }
             KeyCode::Backspace => {
                 // TODO: maybe a beep sound or flast when this erorrs
-                if self.cursor_offset == 0 {
-                    _ = self.value.pop().is_some();
-                } else {
-                    _ = self.value.remove(self.value.len() - self.cursor_offset);
+                match self.cursor_offset {
+                    0 => {
+                        _ = self.value.pop();
+                    }
+                    n if n == self.value.len() => {}
+                    n => _ = self.value.remove(self.value.len() - n),
                 }
-                
+
                 Some(Action::InputResult(InputResult::Changed))
             }
-            KeyCode::Delete => {
-                if self.cursor_offset != 0 {
-                    _ = self.value.remove(self.value.len() - self.cursor_offset + 1);
+            KeyCode::Delete => match self.cursor_offset {
+                1 => {
+                    _ = self.value.pop().is_some();
+                    self.cursor_offset = 0;
                     Some(Action::InputResult(InputResult::Changed))
-                } else {
-                    Some(Action::InputResult(InputResult::NOOP))
                 }
-            }
+                n if n > 1 => {
+                    _ = self.value.remove(self.value.len() - self.cursor_offset);
+                    self.cursor_offset -= 1;
+                    Some(Action::InputResult(InputResult::Changed))
+                }
+                _ => Some(Action::InputResult(InputResult::NOOP)),
+            },
             KeyCode::Esc => {
                 self.value = self.prev_value.clone();
                 self.set_input_mode(InputMode::Normal);
@@ -149,7 +153,8 @@ impl Component for InputLineState {
                 if self.cursor_offset == 0 {
                     self.value.push(char);
                 } else {
-                    self.value.insert(self.value.len() - self.cursor_offset, char)
+                    self.value
+                        .insert(self.value.len() - self.cursor_offset, char)
                 }
                 Some(Action::InputResult(InputResult::Changed))
             }

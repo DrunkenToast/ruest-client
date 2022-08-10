@@ -1,6 +1,6 @@
 use std::cmp;
 
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::{event::{KeyCode, KeyEvent, KeyModifiers}, style::Stylize};
 use tui::{
     layout::Alignment,
     style::{Color, Style},
@@ -97,69 +97,120 @@ impl StatefulWidget for InputLine {
 
 impl Component for InputLineState {
     fn handle_key(&mut self, key_event: KeyEvent) -> Option<Action> {
-        match key_event.code {
-            KeyCode::Enter => {
-                self.prev_value = self.value.clone();
-                self.set_input_mode(InputMode::Normal);
-                Some(Action::InputResult(InputResult::Accepted))
-            }
-            KeyCode::Backspace => {
-                // TODO: maybe a beep sound or flast when this erorrs
-                match self.cursor_offset {
-                    0 => {
-                        _ = self.value.pop();
-                    }
-                    n if n == self.value.len() => {}
-                    n => _ = self.value.remove(self.value.len() - n),
+        // TODO: Replace with modifies.intersects(...)
+        if key_event.modifiers == KeyModifiers::NONE
+            || key_event.modifiers == KeyModifiers::SHIFT
+        {
+            match key_event.code {
+                KeyCode::Enter => {
+                    self.prev_value = self.value.clone();
+                    self.set_input_mode(InputMode::Normal);
+                    Some(Action::InputResult(InputResult::Accepted))
                 }
+                KeyCode::Backspace => {
+                    // TODO: maybe a beep sound or flast when this erorrs
+                    match self.cursor_offset {
+                        0 => {
+                            _ = self.value.pop();
+                        }
+                        n if n == self.value.len() => {}
+                        n => _ = self.value.remove(self.value.len() - n),
+                    }
 
-                Some(Action::InputResult(InputResult::Changed))
+                    Some(Action::InputResult(InputResult::Changed))
+                }
+                KeyCode::Delete => match self.cursor_offset {
+                    1 => {
+                        _ = self.value.pop().is_some();
+                        self.cursor_offset = 0;
+                        Some(Action::InputResult(InputResult::Changed))
+                    }
+                    n if n > 1 => {
+                        _ = self.value.remove(self.value.len() - self.cursor_offset);
+                        self.cursor_offset -= 1;
+                        Some(Action::InputResult(InputResult::Changed))
+                    }
+                    _ => Some(Action::InputResult(InputResult::NOOP)),
+                },
+                KeyCode::Esc => {
+                    self.value = self.prev_value.clone();
+                    self.set_input_mode(InputMode::Normal);
+                    Some(Action::InputResult(InputResult::Canceled))
+                }
+                KeyCode::Char(char) => {
+                    if self.cursor_offset == 0 {
+                        self.value.push(char);
+                    } else {
+                        self.value
+                            .insert(self.value.len() - self.cursor_offset, char)
+                    }
+                    Some(Action::InputResult(InputResult::Changed))
+                }
+                KeyCode::Left => {
+                    if self.cursor_offset < self.value.len() {
+                        self.cursor_offset += 1;
+                        Some(Action::InputResult(InputResult::Changed))
+                    } else {
+                        Some(Action::InputResult(InputResult::NOOP))
+                    }
+                }
+                KeyCode::Right => {
+                    if self.cursor_offset > 0 {
+                        self.cursor_offset -= 1;
+                        Some(Action::InputResult(InputResult::Changed))
+                    } else {
+                        Some(Action::InputResult(InputResult::NOOP))
+                    }
+                }
+                _ => Some(Action::InputResult(InputResult::NOOP)),
             }
-            KeyCode::Delete => match self.cursor_offset {
-                1 => {
-                    _ = self.value.pop().is_some();
+        } else if key_event.modifiers == KeyModifiers::CONTROL {
+            match key_event.code {
+                KeyCode::Char('a') => {
+                    self.cursor_offset = self.value.len();
+                    Some(Action::InputResult(InputResult::Changed))
+                }
+                KeyCode::Char('e') => {
                     self.cursor_offset = 0;
                     Some(Action::InputResult(InputResult::Changed))
                 }
-                n if n > 1 => {
-                    _ = self.value.remove(self.value.len() - self.cursor_offset);
-                    self.cursor_offset -= 1;
+                KeyCode::Char('w') => {
+                    let offset = self.value.len().saturating_sub(self.cursor_offset);
+
+                    let mut value = String::new();
+                    if let Some(idx) = self.value[..offset].trim_end().rfind(" ") {
+                        value.push_str(&self.value[..=idx]);
+                    }
+                    value.push_str(&self.value[offset..]);
+                    self.value = value;
+
                     Some(Action::InputResult(InputResult::Changed))
                 }
-                _ => Some(Action::InputResult(InputResult::NOOP)),
-            },
-            KeyCode::Esc => {
-                self.value = self.prev_value.clone();
-                self.set_input_mode(InputMode::Normal);
-                Some(Action::InputResult(InputResult::Canceled))
-            }
-            KeyCode::Char(char) => {
-                if self.cursor_offset == 0 {
-                    self.value.push(char);
-                } else {
-                    self.value
-                        .insert(self.value.len() - self.cursor_offset, char)
-                }
-                Some(Action::InputResult(InputResult::Changed))
-            }
-            KeyCode::Left => {
-                if self.cursor_offset < self.value.len() {
-                    self.cursor_offset += 1;
+                KeyCode::Char('u') => {
+                    let offset = self.value.len().saturating_sub(self.cursor_offset);
+
+                    self.value = self.value[offset..].to_string();
+
                     Some(Action::InputResult(InputResult::Changed))
-                } else {
-                    Some(Action::InputResult(InputResult::NOOP))
                 }
-            }
-            KeyCode::Right => {
-                if self.cursor_offset > 0 {
-                    self.cursor_offset -= 1;
+                KeyCode::Char('k') => {
+                    let offset = self.value.len().saturating_sub(self.cursor_offset);
+
+                    self.value = self.value[..offset].to_string();
+                    self.cursor_offset = 0;
+
                     Some(Action::InputResult(InputResult::Changed))
-                } else {
-                    Some(Action::InputResult(InputResult::NOOP))
                 }
+
+                _ => None,
             }
-            _ => Some(Action::InputResult(InputResult::NOOP)),
+        } else {
+            None
         }
+    }
+
+    fn input_mode(&self) -> crate::app::InputMode {
+        self.input_mode
     }
 
     fn active(&self) -> bool {
@@ -168,9 +219,5 @@ impl Component for InputLineState {
 
     fn set_active(&mut self, active: bool) {
         self.active = active
-    }
-
-    fn input_mode(&self) -> crate::app::InputMode {
-        self.input_mode
     }
 }

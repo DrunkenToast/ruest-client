@@ -1,6 +1,7 @@
-use std::cmp;
-
-use crossterm::{event::{KeyCode, KeyEvent, KeyModifiers}, style::Stylize};
+use crossterm::{
+    event::{KeyCode, KeyEvent, KeyModifiers},
+    style::Stylize,
+};
 use tui::{
     layout::Alignment,
     style::{Color, Style},
@@ -98,114 +99,167 @@ impl StatefulWidget for InputLine {
 impl Component for InputLineState {
     fn handle_key(&mut self, key_event: KeyEvent) -> Option<Action> {
         // TODO: Replace with modifies.intersects(...)
-        if key_event.modifiers == KeyModifiers::NONE
-            || key_event.modifiers == KeyModifiers::SHIFT
-        {
-            match key_event.code {
-                KeyCode::Enter => {
-                    self.prev_value = self.value.clone();
-                    self.set_input_mode(InputMode::Normal);
-                    Some(Action::InputResult(InputResult::Accepted))
+        match key_event {
+            KeyEvent {
+                code: KeyCode::Char(char),
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+            } => {
+                if self.cursor_offset == 0 {
+                    self.value.push(char);
+                } else {
+                    self.value
+                        .insert(self.value.len() - self.cursor_offset, char)
                 }
-                KeyCode::Backspace => {
-                    // TODO: maybe a beep sound or flast when this erorrs
-                    match self.cursor_offset {
-                        0 => {
-                            _ = self.value.pop();
-                        }
-                        n if n == self.value.len() => {}
-                        n => _ = self.value.remove(self.value.len() - n),
+                Some(Action::InputResult(InputResult::Changed))
+            }
+            KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                self.prev_value = self.value.clone();
+                self.set_input_mode(InputMode::Normal);
+                Some(Action::InputResult(InputResult::Accepted))
+            }
+            KeyEvent {
+                code: KeyCode::Backspace,
+                modifiers: KeyModifiers::NONE,
+            }
+            | KeyEvent {
+                code: KeyCode::Char('h'),
+                modifiers: KeyModifiers::CONTROL,
+            } => {
+                // TODO: maybe a beep sound or flast when this erorrs
+                match self.cursor_offset {
+                    0 => {
+                        _ = self.value.pop();
                     }
+                    n if n == self.value.len() => {}
+                    n => _ = self.value.remove(self.value.len() - n),
+                }
 
+                Some(Action::InputResult(InputResult::Changed))
+            }
+            KeyEvent {
+                code: KeyCode::Delete,
+                modifiers: KeyModifiers::NONE,
+            }
+            | KeyEvent {
+                code: KeyCode::Char('d'),
+                modifiers: KeyModifiers::CONTROL,
+            } => match self.cursor_offset {
+                1 => {
+                    _ = self.value.pop().is_some();
+                    self.cursor_offset = 0;
                     Some(Action::InputResult(InputResult::Changed))
                 }
-                KeyCode::Delete => match self.cursor_offset {
-                    1 => {
-                        _ = self.value.pop().is_some();
-                        self.cursor_offset = 0;
-                        Some(Action::InputResult(InputResult::Changed))
-                    }
-                    n if n > 1 => {
-                        _ = self.value.remove(self.value.len() - self.cursor_offset);
-                        self.cursor_offset -= 1;
-                        Some(Action::InputResult(InputResult::Changed))
-                    }
-                    _ => Some(Action::InputResult(InputResult::NOOP)),
-                },
-                KeyCode::Esc => {
-                    self.value = self.prev_value.clone();
-                    self.set_input_mode(InputMode::Normal);
-                    Some(Action::InputResult(InputResult::Canceled))
-                }
-                KeyCode::Char(char) => {
-                    if self.cursor_offset == 0 {
-                        self.value.push(char);
-                    } else {
-                        self.value
-                            .insert(self.value.len() - self.cursor_offset, char)
-                    }
+                n if n > 1 => {
+                    _ = self.value.remove(self.value.len() - self.cursor_offset);
+                    self.cursor_offset -= 1;
                     Some(Action::InputResult(InputResult::Changed))
-                }
-                KeyCode::Left => {
-                    if self.cursor_offset < self.value.len() {
-                        self.cursor_offset += 1;
-                        Some(Action::InputResult(InputResult::Changed))
-                    } else {
-                        Some(Action::InputResult(InputResult::NOOP))
-                    }
-                }
-                KeyCode::Right => {
-                    if self.cursor_offset > 0 {
-                        self.cursor_offset -= 1;
-                        Some(Action::InputResult(InputResult::Changed))
-                    } else {
-                        Some(Action::InputResult(InputResult::NOOP))
-                    }
                 }
                 _ => Some(Action::InputResult(InputResult::NOOP)),
+            },
+            KeyEvent {
+                code: KeyCode::Esc,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                self.value = self.prev_value.clone();
+                self.set_input_mode(InputMode::Normal);
+                Some(Action::InputResult(InputResult::Canceled))
             }
-        } else if key_event.modifiers == KeyModifiers::CONTROL {
-            match key_event.code {
-                KeyCode::Char('a') => {
-                    self.cursor_offset = self.value.len();
-                    Some(Action::InputResult(InputResult::Changed))
-                }
-                KeyCode::Char('e') => {
-                    self.cursor_offset = 0;
-                    Some(Action::InputResult(InputResult::Changed))
-                }
-                KeyCode::Char('w') => {
-                    let offset = self.value.len().saturating_sub(self.cursor_offset);
-
-                    let mut value = String::new();
-                    if let Some(idx) = self.value[..offset].trim_end().rfind(" ") {
-                        value.push_str(&self.value[..=idx]);
-                    }
-                    value.push_str(&self.value[offset..]);
-                    self.value = value;
-
-                    Some(Action::InputResult(InputResult::Changed))
-                }
-                KeyCode::Char('u') => {
-                    let offset = self.value.len().saturating_sub(self.cursor_offset);
-
-                    self.value = self.value[offset..].to_string();
-
-                    Some(Action::InputResult(InputResult::Changed))
-                }
-                KeyCode::Char('k') => {
-                    let offset = self.value.len().saturating_sub(self.cursor_offset);
-
-                    self.value = self.value[..offset].to_string();
-                    self.cursor_offset = 0;
-
-                    Some(Action::InputResult(InputResult::Changed))
-                }
-
-                _ => None,
+            KeyEvent {
+                code: KeyCode::Left,
+                modifiers: KeyModifiers::NONE,
             }
-        } else {
-            None
+            | KeyEvent {
+                code: KeyCode::Char('b'),
+                modifiers: KeyModifiers::CONTROL,
+            } => {
+                if self.cursor_offset < self.value.len() {
+                    self.cursor_offset += 1;
+                    Some(Action::InputResult(InputResult::Changed))
+                } else {
+                    Some(Action::InputResult(InputResult::NOOP))
+                }
+            }
+            KeyEvent {
+                code: KeyCode::Right,
+                modifiers: KeyModifiers::NONE,
+            }
+            | KeyEvent {
+                code: KeyCode::Char('f'),
+                modifiers: KeyModifiers::CONTROL,
+            } => {
+                if self.cursor_offset > 0 {
+                    self.cursor_offset -= 1;
+                    Some(Action::InputResult(InputResult::Changed))
+                } else {
+                    Some(Action::InputResult(InputResult::NOOP))
+                }
+            }
+            KeyEvent {
+                code: KeyCode::Char('a'),
+                modifiers: KeyModifiers::CONTROL,
+            }
+            | KeyEvent {
+                code: KeyCode::Home,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                self.cursor_offset = self.value.len();
+                Some(Action::InputResult(InputResult::Changed))
+            }
+            KeyEvent {
+                code: KeyCode::Char('e'),
+                modifiers: KeyModifiers::CONTROL,
+            }
+            | KeyEvent {
+                code: KeyCode::End,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                self.cursor_offset = 0;
+                Some(Action::InputResult(InputResult::Changed))
+            }
+            KeyEvent {
+                code: KeyCode::Char('w'),
+                modifiers: KeyModifiers::CONTROL,
+            }
+            | KeyEvent {
+                code: KeyCode::Backspace,
+                modifiers: KeyModifiers::CONTROL,
+            } => {
+                let offset = self.value.len().saturating_sub(self.cursor_offset);
+
+                let mut value = String::new();
+                if let Some(idx) = self.value[..offset].trim_end().rfind(' ') {
+                    value.push_str(&self.value[..=idx]);
+                }
+                value.push_str(&self.value[offset..]);
+                self.value = value;
+
+                Some(Action::InputResult(InputResult::Changed))
+            }
+            KeyEvent {
+                code: KeyCode::Char('u'),
+                modifiers: KeyModifiers::CONTROL,
+            } => {
+                let offset = self.value.len().saturating_sub(self.cursor_offset);
+
+                self.value = self.value[offset..].to_string();
+
+                Some(Action::InputResult(InputResult::Changed))
+            }
+            KeyEvent {
+                code: KeyCode::Char('k'),
+                modifiers: KeyModifiers::CONTROL,
+            } => {
+                let offset = self.value.len().saturating_sub(self.cursor_offset);
+
+                self.value = self.value[..offset].to_string();
+                self.cursor_offset = 0;
+
+                Some(Action::InputResult(InputResult::Changed))
+            }
+            _ => Some(Action::InputResult(InputResult::NOOP)),
         }
     }
 

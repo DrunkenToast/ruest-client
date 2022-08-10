@@ -58,14 +58,6 @@ impl Theme {
         Style::default().fg(self.selected)
     }
 
-    pub fn hostname(&self, mode: InputMode) -> Style {
-        let style = Style::default().add_modifier(Modifier::BOLD);
-        match mode {
-            InputMode::Normal => style,
-            InputMode::Editing => style.add_modifier(Modifier::ITALIC).fg(self.selected),
-        }
-    }
-
     pub fn status_code(&self, code: u16) -> Style {
         let style = Style::default().add_modifier(Modifier::BOLD);
         match code {

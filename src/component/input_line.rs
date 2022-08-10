@@ -82,14 +82,13 @@ impl StatefulWidget for InputLine {
 
                 Spans::from(vec![
                     Span::raw(left),
-                    Span::styled(cursor, Style::default().bg(Color::White)),
+                    Span::styled(cursor, Style::default().fg(Color::Black).bg(Color::White)),
                     Span::raw(right),
                 ])
             }
         };
 
         Paragraph::new(spans)
-            .style(state.theme.hostname(state.input_mode()))
             .alignment(Alignment::Left)
             //.wrap(Wrap { trim: false }) // NOTE: Removes trailing space even with trim off
             .render(area, buf);

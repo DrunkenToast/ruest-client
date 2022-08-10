@@ -68,23 +68,8 @@ impl StatefulWidget for InputLine {
         buf: &mut tui::buffer::Buffer,
         state: &mut Self::State,
     ) {
-        //let spans = Spans::from(if state.cursor_offset != 0 {
-        //    vec![Span::raw(state.value.as_str()),
-        //        Span::styled("jos", Style::default().bg(Color::White))
-
-        //    ]
-        //} else {
-        //    vec![
-        //        Span::styled(state.value.as_str(), Style::default()),
-        //        Span::styled(" ", Style::default().bg(Color::White))
-        //    ]
-        //});
         let spans = match (state.input_mode, state.cursor_offset) {
             (InputMode::Normal, _) => Spans::from(Span::raw(state.value.as_str())),
-            //(InputMode::Editing, 0) => Spans::from(vec![
-            //    Span::raw(state.value.as_str()),
-            //    Span::styled(" ", Style::default().bg(Color::White)),
-            //]),
             (InputMode::Editing, 0) => Spans::from(vec![
                 Span::raw(&state.value),
                 Span::styled(" ", Style::default().bg(Color::White)),
@@ -167,7 +152,6 @@ impl Component for InputLineState {
                 }
             }
             KeyCode::Right => {
-                // TODO: move Some(Action::...) into the match
                 if self.cursor_offset > 0 {
                     self.cursor_offset -= 1;
                     Some(Action::InputResult(InputResult::Changed))

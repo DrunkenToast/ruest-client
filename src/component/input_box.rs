@@ -1,4 +1,4 @@
-use crossterm::event::{KeyEvent};
+use crossterm::event::KeyEvent;
 use tui::{
     layout::Alignment,
     widgets::{Paragraph, StatefulWidget, Widget},

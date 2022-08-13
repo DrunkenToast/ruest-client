@@ -77,11 +77,13 @@ impl<'a> App<'a> {
                         self.activate_pane(pane);
                     }
                     None
-                },
+                }
                 clear @ Clear => Some(clear),
                 _ => None,
             }
-        } else { None }
+        } else {
+            None
+        }
     }
 
     pub fn active_pane(&mut self) -> &mut dyn Pane {

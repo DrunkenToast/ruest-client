@@ -10,7 +10,7 @@ use tui::{
     Terminal,
 };
 
-use app::{App, InputMode};
+use app::{App, InputMode, Action};
 use keys::GlobalKeyAction;
 use ui::{theme::Theme, ui};
 
@@ -59,10 +59,14 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
                 match GlobalKeyAction::from(key) {
                     GlobalKeyAction::Quit => return Ok(()),
                     GlobalKeyAction::ToggleRequestList => app.requests_list.toggle_visible(),
-                    _ => app.handle_key_event(key),
+                    _ => { 
+                        if let Some(Action::Clear) = app.handle_key_event(key) {
+                            terminal.clear();
+                        }
+                    },
                 }
             } else {
-                app.handle_key_event(key)
+                app.handle_key_event(key);
             }
         }
     }

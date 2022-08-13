@@ -42,6 +42,7 @@ pub enum InputMode {
 pub enum Action {
     MoveRelative(Movement),
     InputResult(InputResult),
+    Clear,
 }
 
 pub struct App<'a> {
@@ -67,15 +68,20 @@ impl<'a> App<'a> {
         app
     }
 
-    pub fn handle_key_event(&mut self, key_event: KeyEvent) {
+    pub fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<Action> {
         if let Some(action) = self.active_pane().handle_key(key_event) {
-            if let Action::MoveRelative(dir) = action {
-                // TODO: move .relative_pane() into .handle_key()
-                if let Some(pane) = self.active_pane().relative_pane(dir) {
-                    self.activate_pane(pane);
-                }
+            use Action::*;
+            match action {
+                MoveRelative(dir) => {
+                    if let Some(pane) = self.active_pane().relative_pane(dir) {
+                        self.activate_pane(pane);
+                    }
+                    None
+                },
+                clear @ Clear => Some(clear),
+                _ => None,
             }
-        }
+        } else { None }
     }
 
     pub fn active_pane(&mut self) -> &mut dyn Pane {

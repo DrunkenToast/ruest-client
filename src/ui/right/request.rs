@@ -47,7 +47,7 @@ impl Component for RequestState {
                 }
                 NormalKeyAction::Edit => {
                     self.tabs[self.tab_index].edit();
-                    None
+                    Some(Action::Clear)
                 }
                 key => key.relative_or_none(),
             },

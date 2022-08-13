@@ -289,8 +289,8 @@ impl Component for InputLineState {
                 code: KeyCode::Char('f'),
                 modifiers: KeyModifiers::ALT,
             } => {
-                    // TODO: Move 1 wort to the right
-                    todo!("I rly dont know rn how to do this");
+                // TODO: Move 1 wort to the right
+                todo!("I rly dont know rn how to do this");
             }
             _ => Some(Action::InputResult(InputResult::NOOP)),
         }

@@ -9,6 +9,7 @@ use tui::{
 use crate::{
     app::{Action, InputMode, Movement, PaneType},
     component::{
+        input_box::{self, InputBox},
         input_line::{self, InputLine, InputLineState},
         Component,
     },
@@ -22,6 +23,7 @@ use super::RightStatePane;
 #[derive(Debug)]
 pub struct RequestState {
     tab_index: usize,
+    tabs: [input_box::InputBoxState; Request::OPTIONS.len()],
     active: bool,
     theme: GlobalTheme,
     hostname_input_state: input_line::InputLineState,
@@ -41,6 +43,10 @@ impl Component for RequestState {
                 }
                 NormalKeyAction::InsertMode => {
                     self.hostname_input_state.set_input_mode(InputMode::Editing);
+                    None
+                }
+                NormalKeyAction::Edit => {
+                    self.tabs[self.tab_index].edit();
                     None
                 }
                 key => key.relative_or_none(),
@@ -89,6 +95,12 @@ impl Pane for RequestState {
 impl RequestState {
     const TAB_LEN: usize = Request::OPTIONS.len();
     pub fn new(theme: GlobalTheme) -> Self {
+        let tabs = [
+            input_box::InputBoxState::new("", Request::OPTIONS[0], theme.clone()),
+            input_box::InputBoxState::new("", Request::OPTIONS[1], theme.clone()),
+            input_box::InputBoxState::new("", Request::OPTIONS[2], theme.clone()),
+            input_box::InputBoxState::new("", Request::OPTIONS[3], theme.clone()),
+        ];
         Self {
             tab_index: 0,
             hostname_input_state: InputLineState::new(
@@ -98,6 +110,7 @@ impl RequestState {
             ),
             theme,
             active: false,
+            tabs,
         }
     }
 
@@ -151,7 +164,7 @@ impl StatefulWidget for Request {
             .select(state.tab_index)
             .highlight_style(state.theme.selected());
 
-        let inner = Block::default()
+        let inner_block = Block::default()
             .title(Self::OPTIONS[state.tab_index])
             .borders(Borders::ALL)
             .style(state.theme.block(state.active()));
@@ -160,8 +173,13 @@ impl StatefulWidget for Request {
         let hostname_block = Block::default()
             .borders(Borders::ALL)
             .style(state.theme.block(editing));
+
         let inner_host_area = hostname_block.inner(chunks[0]);
+        let inner_inner_area = inner_block.inner(chunks[2]);
+
         hostname_block.render(chunks[0], buf);
+        tabs.render(chunks[1], buf);
+        inner_block.render(chunks[2], buf);
 
         StatefulWidget::render(
             InputLine::default(),
@@ -169,7 +187,12 @@ impl StatefulWidget for Request {
             buf,
             &mut state.hostname_input_state,
         );
-        tabs.render(chunks[1], buf);
-        inner.render(chunks[2], buf);
+
+        StatefulWidget::render(
+            InputBox::default(),
+            inner_inner_area,
+            buf,
+            &mut state.tabs[state.tab_index],
+        );
     }
 }

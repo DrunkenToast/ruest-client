@@ -19,6 +19,7 @@ pub enum NormalKeyAction {
     PrevTab,
     Accept,
     InsertMode,
+    Edit,
     Other,
 }
 
@@ -80,6 +81,11 @@ impl From<KeyEvent> for NormalKeyAction {
                 code: KeyCode::Char('i'),
                 modifiers: KeyModifiers::NONE,
             } => Self::InsertMode,
+
+            KeyEvent {
+                code: KeyCode::Char('e'),
+                modifiers: KeyModifiers::NONE,
+            } => Self::Edit,
 
             KeyEvent {
                 code: KeyCode::BackTab,

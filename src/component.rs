@@ -5,6 +5,7 @@ use crate::{
     keys::NormalKeyAction,
 };
 
+pub mod input_box;
 pub mod input_line;
 
 pub trait Component {

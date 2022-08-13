@@ -4,7 +4,7 @@ use tui::{
     widgets::StatefulWidget,
 };
 
-use crate::{app::PaneType, pane::Pane};
+use crate::{app::PaneType, component::Component, pane::Pane};
 
 use super::theme::GlobalTheme;
 
@@ -61,6 +61,16 @@ impl StatefulWidget for Right {
     }
 }
 
+impl Component for RightState {
+    fn active(&self) -> bool {
+        self.active
+    }
+
+    fn set_active(&mut self, active: bool) {
+        self.active = active;
+    }
+}
+
 impl Pane for RightState {
     fn active_pane(&mut self, pane: &crate::app::PaneType) -> &mut dyn Pane {
         if let PaneType::Right(pane) = pane {
@@ -71,13 +81,5 @@ impl Pane for RightState {
         } else {
             unreachable!();
         }
-    }
-
-    fn active(&self) -> bool {
-        self.active
-    }
-
-    fn set_active(&mut self, active: bool) {
-        self.active = active;
     }
 }

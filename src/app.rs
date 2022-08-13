@@ -4,6 +4,7 @@ use super::ui::{requests_list::RequestsList, right::RightState};
 use crossterm::event::KeyEvent;
 
 use crate::{
+    component::input_line::InputResult,
     pane::Pane,
     ui::{
         right::RightStatePane,
@@ -38,8 +39,9 @@ pub enum InputMode {
 }
 
 #[derive(Debug)]
-pub enum Actions {
+pub enum Action {
     MoveRelative(Movement),
+    InputResult(InputResult),
 }
 
 pub struct App<'a> {
@@ -67,7 +69,7 @@ impl<'a> App<'a> {
 
     pub fn handle_key_event(&mut self, key_event: KeyEvent) {
         if let Some(action) = self.active_pane().handle_key(key_event) {
-            if let Actions::MoveRelative(dir) = action {
+            if let Action::MoveRelative(dir) = action {
                 // TODO: move .relative_pane() into .handle_key()
                 if let Some(pane) = self.active_pane().relative_pane(dir) {
                     self.activate_pane(pane);

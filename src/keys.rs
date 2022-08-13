@@ -1,6 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use crate::app::{Actions, Movement};
+use crate::app::{Action, Movement};
 
 pub enum GlobalKeyAction {
     Quit,
@@ -23,12 +23,12 @@ pub enum NormalKeyAction {
 }
 
 impl NormalKeyAction {
-    pub fn relative_or_none(self) -> Option<Actions> {
+    pub fn relative_or_none(self) -> Option<Action> {
         match self {
-            Self::MoveLeft => Some(Actions::MoveRelative(Movement::Left)),
-            Self::MoveRight => Some(Actions::MoveRelative(Movement::Right)),
-            Self::MoveUp => Some(Actions::MoveRelative(Movement::Up)),
-            Self::MoveDown => Some(Actions::MoveRelative(Movement::Down)),
+            Self::MoveLeft => Some(Action::MoveRelative(Movement::Left)),
+            Self::MoveRight => Some(Action::MoveRelative(Movement::Right)),
+            Self::MoveUp => Some(Action::MoveRelative(Movement::Up)),
+            Self::MoveDown => Some(Action::MoveRelative(Movement::Down)),
             _ => None,
         }
     }

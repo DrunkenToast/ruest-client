@@ -1,4 +1,4 @@
-use std::{error::Error, io};
+use std::{error::Error, io, collections::HashMap};
 
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event},
@@ -6,6 +6,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use http::http_request;
+use reqwest::header::HeaderMap;
 use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
@@ -22,7 +23,8 @@ mod pane;
 mod ui;
 mod http;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -46,7 +48,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     if let Err(err) = res {
         println!("{:?}", err)
     }
-
+    let empty: HashMap<String,String> = HashMap::new();
+    let response = http_request(reqwest::Method::GET, 
+        "https://jsonplaceholder.typicode.com/todos/1",  
+        HeaderMap::try_from(&empty).unwrap(), reqwest::header::HeaderValue::from_str("application/json").unwrap(), 
+        "{}").await?;
+    println!("{}", response.text().await?);
 
     Ok(())
 }

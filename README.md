@@ -17,4 +17,6 @@ Movement keys:
 Actions:
 - Exit: `Esc`
 - Accept: `Enter` or `Spc`
+- Insert: `i`
+- Edit: `e`
 

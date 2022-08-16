@@ -1,4 +1,4 @@
-use std::{error::Error, io, collections::HashMap};
+use std::{collections::HashMap, error::Error, io};
 
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event},
@@ -18,10 +18,10 @@ use ui::{theme::Theme, ui};
 
 mod app;
 mod component;
+mod http;
 mod keys;
 mod pane;
 mod ui;
-mod http;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -48,11 +48,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     if let Err(err) = res {
         println!("{:?}", err)
     }
-    let empty: HashMap<String,String> = HashMap::new();
-    let response = http_request(reqwest::Method::GET, 
-        "https://jsonplaceholder.typicode.com/todos/1",  
-        HeaderMap::try_from(&empty).unwrap(), reqwest::header::HeaderValue::from_str("application/json").unwrap(), 
-        "{}").await?;
+    let empty: HashMap<String, String> = HashMap::new();
+    let response = http_request(
+        reqwest::Method::GET,
+        "https://jsonplaceholder.typicode.com/todos/1",
+        HeaderMap::try_from(&empty).unwrap(),
+        reqwest::header::HeaderValue::from_str("application/json").unwrap(),
+        "{}",
+    )
+    .await?;
     println!("{}", response.text().await?);
 
     Ok(())

@@ -3,7 +3,6 @@ use reqwest::{
     Body, IntoUrl, Method,
 };
 
-
 pub async fn http_request<T, U>(
     method: reqwest::Method,
     uri: U,
@@ -35,24 +34,24 @@ where
 
 #[cfg(test)]
 mod tests {
+    use mockito::{self, mock};
     use reqwest::header::{HeaderMap, HeaderValue};
     use tokio::test;
-    use mockito::{self, mock};
-    
+
     use super::http_request;
 
     #[test]
     async fn get_ok() {
-    let mock = mock("GET", "/").create();
+        let mock = mock("GET", "/").create();
         let resp = http_request(
             reqwest::Method::GET,
-            mockito::server_url(), 
-           HeaderMap::new(), 
+            mockito::server_url(),
+            HeaderMap::new(),
             HeaderValue::from_str("").unwrap(),
             "{}",
         )
-        .await.unwrap();
+        .await
+        .unwrap();
         assert_eq!(resp.status(), 200)
     }
 }
-

@@ -3,7 +3,7 @@ use tui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Span, Spans},
-    widgets::{Block, Borders, Cell, Row, StatefulWidget, Table, Tabs, Widget},
+    widgets::{Block, Borders, Cell, Paragraph, Row, StatefulWidget, Table, Tabs, Widget},
 };
 
 use crate::{
@@ -19,9 +19,10 @@ use super::RightStatePane;
 #[derive(Debug, Clone)]
 pub struct ResponseState {
     tab_index: usize,
-    status_code: reqwest::StatusCode,
+    pub status_code: reqwest::StatusCode,
     theme: GlobalTheme,
     active: bool,
+    pub response: String,
 }
 
 impl Component for ResponseState {
@@ -74,6 +75,7 @@ impl ResponseState {
             status_code: reqwest::StatusCode::default(),
             theme,
             active: false,
+            response: String::default(),
         }
     }
 
@@ -134,8 +136,9 @@ impl StatefulWidget for Response {
                 .as_ref(),
             )
             .split(request_area);
-        // TODO: Get status code based on response
-        state.status_code = reqwest::StatusCode::NOT_FOUND;
+
+        let response_text =
+            Paragraph::new(state.response.clone()).style(state.theme.block(state.active()));
         Widget::render(
             Table::new([Row::new([Cell::from(Spans::from(vec![
                 Span::raw(" Status: "),
@@ -154,5 +157,6 @@ impl StatefulWidget for Response {
             .highlight_style(state.theme.selected())
             .divider("|")
             .render(chunks[1], buf);
+        response_text.render(chunks[2], buf);
     }
 }

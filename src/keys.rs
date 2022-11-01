@@ -6,6 +6,7 @@ pub enum GlobalKeyAction {
     Quit,
     Exit,
     ToggleRequestList,
+    Send,
     Other,
 }
 
@@ -46,6 +47,11 @@ impl From<KeyEvent> for GlobalKeyAction {
                 code: KeyCode::Char('r'),
                 modifiers: KeyModifiers::NONE,
             } => Self::ToggleRequestList,
+
+            KeyEvent {
+                code: KeyCode::Char('p'),
+                modifiers: KeyModifiers::NONE,
+            } => Self::Send,
 
             _ => Self::Other,
         }

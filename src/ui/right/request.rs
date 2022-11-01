@@ -24,7 +24,7 @@ pub struct RequestState {
     tab_index: usize,
     active: bool,
     theme: GlobalTheme,
-    hostname_input_state: input_line::InputLineState,
+    pub hostname_input_state: input_line::InputLineState,
 }
 
 impl Component for RequestState {

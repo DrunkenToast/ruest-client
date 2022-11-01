@@ -1,15 +1,19 @@
 use std::rc::Rc;
 
 use super::ui::{requests_list::RequestsList, right::RightState};
-use crossterm::event::KeyEvent;
-
 use crate::{
     component::input_line::InputResult,
+    http::http_request,
     pane::Pane,
     ui::{
         right::RightStatePane,
         theme::{GlobalTheme, Theme},
     },
+};
+use crossterm::event::KeyEvent;
+use reqwest::{
+    header::{HeaderMap, HeaderValue},
+    Response,
 };
 
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -91,5 +95,22 @@ impl<'a> App<'a> {
             self.active_pane_type = pane;
             self.active_pane().set_active(true);
         }
+    }
+    pub async fn send_request(&mut self) -> Response {
+        let method = reqwest::Method::GET;
+        let uri = &self.right_state.request_state.hostname_input_state.value;
+        let resp = http_request(
+            method,
+            uri,
+            HeaderMap::new(),
+            HeaderValue::from_str("").unwrap(),
+            "{}",
+        )
+        .await;
+        let response = match resp {
+            Ok(r) => r,
+            Err(e) => panic!("{}", e),
+        };
+        response
     }
 }

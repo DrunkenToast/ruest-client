@@ -34,7 +34,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // create app and run it
     let app = App::new(Theme::default());
-    let res = run_app(&mut terminal, app);
+    let res = run_app(&mut terminal, app).await;
 
     // restore terminal
     disable_raw_mode()?;
@@ -48,21 +48,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     if let Err(err) = res {
         println!("{:?}", err)
     }
-    let empty: HashMap<String, String> = HashMap::new();
-    let response = http_request(
-        reqwest::Method::GET,
-        "https://jsonplaceholder.typicode.com/todos/1",
-        HeaderMap::try_from(&empty).unwrap(),
-        reqwest::header::HeaderValue::from_str("application/json").unwrap(),
-        "{}",
-    )
-    .await?;
-    println!("{}", response.text().await?);
 
     Ok(())
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
+async fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App<'_>) -> io::Result<()> {
     loop {
         terminal.draw(|f| ui(f, &mut app))?;
 
@@ -73,6 +63,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
                 match GlobalKeyAction::from(key) {
                     GlobalKeyAction::Quit => return Ok(()),
                     GlobalKeyAction::ToggleRequestList => app.requests_list.toggle_visible(),
+                    GlobalKeyAction::Send => {
+                        let resp = app.send_request().await;
+                        app.right_state.response_state.status_code = resp.status();
+                        app.right_state.response_state.response = resp.text().await.unwrap();
+                    }
                     _ => app.handle_key_event(key),
                 }
             } else {

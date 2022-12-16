@@ -1,12 +1,11 @@
-use std::{collections::HashMap, error::Error, io};
+use std::{error::Error, io};
 
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event},
+    event::{self, DisableMouseCapture, Event},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use http::http_request;
-use reqwest::header::HeaderMap;
+
 use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
@@ -67,6 +66,9 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App<'_>) -> io
                         let resp = app.send_request().await;
                         app.right_state.response_state.status_code = resp.status();
                         app.right_state.response_state.response = resp.text().await.unwrap();
+                    }
+                    GlobalKeyAction::Methods => {
+                        app.show_methods = !app.show_methods;
                     }
                     _ => app.handle_key_event(key),
                 }

@@ -53,6 +53,7 @@ pub struct App<'a> {
     pub right_state: RightState,
     pub theme: GlobalTheme,
     active_pane_type: PaneType,
+    pub show_methods: bool,
 }
 
 impl<'a> App<'a> {
@@ -66,6 +67,7 @@ impl<'a> App<'a> {
             right_state,
             active_pane_type: PaneType::RequestList,
             theme,
+            show_methods: false,
         };
         app.active_pane().set_active(true);
         app

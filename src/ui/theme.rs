@@ -2,8 +2,6 @@ use std::rc::Rc;
 
 use tui::style::{Color, Modifier, Style};
 
-use crate::app::InputMode;
-
 pub type GlobalTheme = Rc<Theme>;
 
 #[derive(Debug)]

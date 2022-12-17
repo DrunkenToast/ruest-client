@@ -68,7 +68,7 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App<'_>) -> io
                         app.right_state.response_state.response = resp.text().await.unwrap();
                     }
                     GlobalKeyAction::Methods => {
-                        app.show_methods = !app.show_methods;
+                        app.methods_list.toggle_visible();
                     }
                     _ => app.handle_key_event(key),
                 }

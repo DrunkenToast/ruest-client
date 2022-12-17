@@ -22,6 +22,7 @@ where
         Method::DELETE => client.delete(uri),
         Method::PATCH => client.patch(uri),
         Method::HEAD => client.head(uri),
+        Method::OPTIONS => client.request(Method::OPTIONS, uri),
         _ => todo!(),
     };
     let request = request
@@ -42,7 +43,7 @@ mod tests {
 
     #[test]
     async fn get_ok() {
-        let mock = mock("GET", "/").create();
+        let _mock = mock("GET", "/").create();
         let resp = http_request(
             reqwest::Method::GET,
             mockito::server_url(),

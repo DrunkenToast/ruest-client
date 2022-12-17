@@ -1,9 +1,11 @@
+use std::sync::{Arc, Mutex};
+
 use crossterm::event::KeyEvent;
 use tui::{
     buffer::Buffer,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     text::Spans,
-    widgets::{Block, Borders, StatefulWidget, Tabs, Widget},
+    widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget},
 };
 
 use crate::{
@@ -25,6 +27,7 @@ pub struct RequestState {
     active: bool,
     theme: GlobalTheme,
     pub hostname_input_state: input_line::InputLineState,
+    selected_method: Arc<Mutex<reqwest::Method>>,
 }
 
 impl Component for RequestState {
@@ -88,7 +91,7 @@ impl Pane for RequestState {
 
 impl RequestState {
     const TAB_LEN: usize = Request::OPTIONS.len();
-    pub fn new(theme: GlobalTheme) -> Self {
+    pub fn new(theme: GlobalTheme, selected_method: Arc<Mutex<reqwest::Method>>) -> Self {
         Self {
             tab_index: 0,
             hostname_input_state: InputLineState::new(
@@ -98,6 +101,7 @@ impl RequestState {
             ),
             theme,
             active: false,
+            selected_method,
         }
     }
 
@@ -156,12 +160,33 @@ impl StatefulWidget for Request {
             .borders(Borders::ALL)
             .style(state.theme.block(state.active()));
 
+        let bar_chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
+            .split(chunks[0]);
+
+        let val = match state.selected_method.lock() {
+            Ok(method) => method.to_string(),
+            Err(_) => String::from("ERROR"),
+        };
+        let method_block = Paragraph::new(val)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .style(state.theme.block(false)),
+            )
+            .style(state.theme.focused())
+            .alignment(Alignment::Center);
+        let area = bar_chunks[0];
+        method_block.render(area, buf);
+
         let editing = state.hostname_input_state.input_mode() == InputMode::Editing;
         let hostname_block = Block::default()
             .borders(Borders::ALL)
             .style(state.theme.block(editing));
-        let inner_host_area = hostname_block.inner(chunks[0]);
-        hostname_block.render(chunks[0], buf);
+        let area = bar_chunks[1];
+        let inner_host_area = hostname_block.inner(area);
+        hostname_block.render(area, buf);
 
         StatefulWidget::render(
             InputLine::default(),
@@ -169,6 +194,7 @@ impl StatefulWidget for Request {
             buf,
             &mut state.hostname_input_state,
         );
+
         tabs.render(chunks[1], buf);
         inner.render(chunks[2], buf);
     }

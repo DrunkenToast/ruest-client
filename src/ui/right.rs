@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use tui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
@@ -33,9 +35,9 @@ pub enum RightStatePane {
 pub struct Right;
 
 impl RightState {
-    pub fn new(theme: GlobalTheme) -> Self {
+    pub fn new(theme: GlobalTheme, selected_method: Arc<Mutex<reqwest::Method>>) -> Self {
         Self {
-            request_state: RequestState::new(theme.clone()),
+            request_state: RequestState::new(theme.clone(), selected_method),
             response_state: ResponseState::new(theme),
             active: false,
         }

@@ -12,6 +12,7 @@ use super::app::App;
 
 use right::Right;
 
+pub mod methods_list;
 pub mod requests_list;
 pub mod right;
 pub mod theme;
@@ -54,23 +55,26 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     f.render_stateful_widget(Right::default(), chunks[1], &mut app.right_state);
 
-    if app.show_methods {
-        let items = [
-            ListItem::new("Get"),
-            ListItem::new("Post"),
-            ListItem::new("Put"),
-            ListItem::new("Delete"),
-            ListItem::new("Patch"),
-            ListItem::new("Head"),
-        ];
-        let methods_list = List::new(items)
-            .block(Block::default().title("Methods").borders(Borders::ALL))
-            .style(app.theme.block(true))
-            .highlight_style(app.theme.selected())
-            .highlight_symbol("> ");
+    if app.methods_list.visible() {
+        let items: Vec<ListItem> = app
+            .methods_list
+            .items
+            .iter()
+            .map(|i| ListItem::new(Spans::from(i.as_str())))
+            .collect();
+
+        let items = List::new(items)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Methods")
+                    .style(app.theme.block(app.methods_list.active())),
+            )
+            .highlight_symbol("> ")
+            .highlight_style(app.theme.selected());
         let area = centered_rect(30, 60, f.size());
         f.render_widget(Clear, area);
-        f.render_widget(methods_list, area);
+        f.render_stateful_widget(items, area, &mut app.methods_list.state);
     }
 }
 /// helper function to create a centered rect using up certain percentage of the available rect `r`

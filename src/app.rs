@@ -1,11 +1,15 @@
-use std::rc::Rc;
+use std::{
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 
 use super::ui::{requests_list::RequestsList, right::RightState};
 use crate::{
-    component::input_line::InputResult,
+    component::{input_line::InputResult, Component},
     http::http_request,
     pane::Pane,
     ui::{
+        methods_list::MethodsList,
         right::RightStatePane,
         theme::{GlobalTheme, Theme},
     },
@@ -53,27 +57,44 @@ pub struct App<'a> {
     pub right_state: RightState,
     pub theme: GlobalTheme,
     active_pane_type: PaneType,
-    pub show_methods: bool,
+    pub methods_list: MethodsList,
 }
 
 impl<'a> App<'a> {
     pub fn new(theme: Theme) -> App<'a> {
         let theme = Rc::new(theme);
         let requests_list = RequestsList::new(vec!["Request 1", "Request 2", "Request 3"]);
-        let right_state = RightState::new(theme.clone());
+        let selected_method = Arc::new(Mutex::new(reqwest::Method::GET));
+        let methods_list = MethodsList::new(
+            vec![
+                reqwest::Method::GET,
+                reqwest::Method::POST,
+                reqwest::Method::PUT,
+                reqwest::Method::DELETE,
+                reqwest::Method::PATCH,
+                reqwest::Method::HEAD,
+                reqwest::Method::OPTIONS,
+            ],
+            selected_method.clone(),
+        );
+        let right_state = RightState::new(theme.clone(), selected_method.clone());
 
         let mut app = App {
             requests_list,
             right_state,
             active_pane_type: PaneType::RequestList,
             theme,
-            show_methods: false,
+            methods_list,
         };
         app.active_pane().set_active(true);
         app
     }
 
     pub fn handle_key_event(&mut self, key_event: KeyEvent) {
+        if self.methods_list.visible() {
+            self.methods_list.handle_key(key_event);
+            return;
+        }
         if let Some(action) = self.active_pane().handle_key(key_event) {
             if let Action::MoveRelative(dir) = action {
                 // TODO: move .relative_pane() into .handle_key()

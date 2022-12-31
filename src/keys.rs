@@ -6,6 +6,8 @@ pub enum GlobalKeyAction {
     Quit,
     Exit,
     ToggleRequestList,
+    Send,
+    Methods,
     Other,
 }
 
@@ -19,6 +21,7 @@ pub enum NormalKeyAction {
     PrevTab,
     Accept,
     InsertMode,
+    Copy,
     Other,
 }
 
@@ -46,6 +49,16 @@ impl From<KeyEvent> for GlobalKeyAction {
                 code: KeyCode::Char('r'),
                 modifiers: KeyModifiers::NONE,
             } => Self::ToggleRequestList,
+
+            KeyEvent {
+                code: KeyCode::Char('p'),
+                modifiers: KeyModifiers::NONE,
+            } => Self::Send,
+
+            KeyEvent {
+                code: KeyCode::Char('m'),
+                modifiers: KeyModifiers::NONE,
+            } => Self::Methods,
 
             _ => Self::Other,
         }
@@ -80,7 +93,10 @@ impl From<KeyEvent> for NormalKeyAction {
                 code: KeyCode::Char('i'),
                 modifiers: KeyModifiers::NONE,
             } => Self::InsertMode,
-
+            KeyEvent {
+                code: KeyCode::Char('y'),
+                modifiers: KeyModifiers::NONE,
+            } => Self::Copy,
             KeyEvent {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,

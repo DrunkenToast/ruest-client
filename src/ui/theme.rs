@@ -56,6 +56,10 @@ impl Theme {
         Style::default().fg(self.selected)
     }
 
+    pub fn focused(&self) -> Style {
+        Style::default().fg(self.focused)
+    }
+
     pub fn placeholder(&self) -> Style {
         Style::default()
             .add_modifier(Modifier::ITALIC)

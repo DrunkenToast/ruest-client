@@ -1,9 +1,10 @@
+use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use crossterm::event::KeyEvent;
 use tui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Span, Spans},
-    widgets::{Block, Borders, Cell, Paragraph, Row, StatefulWidget, Table, Tabs, Widget},
+    widgets::{Block, Borders, Cell, Paragraph, Row, StatefulWidget, Table, Tabs, Widget, Wrap},
 };
 
 use crate::{
@@ -23,6 +24,7 @@ pub struct ResponseState {
     theme: GlobalTheme,
     active: bool,
     pub response: String,
+    scroll: u16,
 }
 
 impl Component for ResponseState {
@@ -34,6 +36,21 @@ impl Component for ResponseState {
             }
             NormalKeyAction::NextTab => {
                 self.next();
+                None
+            }
+            NormalKeyAction::MoveUp => {
+                self.scroll += 1;
+                None
+            }
+            NormalKeyAction::MoveDown => {
+                if self.scroll != 0 {
+                    self.scroll -= 1;
+                }
+                None
+            }
+            NormalKeyAction::Copy => {
+                let mut ctx = ClipboardContext::new().unwrap();
+                ctx.set_contents(self.response.clone()).unwrap();
                 None
             }
             key => key.relative_or_none(),
@@ -76,6 +93,7 @@ impl ResponseState {
             theme,
             active: false,
             response: String::default(),
+            scroll: 0,
         }
     }
 
@@ -102,6 +120,7 @@ impl ResponseState {
                 None
             }
             NormalKeyAction::Accept => None,
+
             key => key.relative_or_none(),
         }
     }
@@ -137,8 +156,10 @@ impl StatefulWidget for Response {
             )
             .split(request_area);
 
-        let response_text =
-            Paragraph::new(state.response.clone()).style(state.theme.block(state.active()));
+        let response_text = Paragraph::new(state.response.clone())
+            .style(state.theme.block(state.active()))
+            .scroll((state.scroll, 0))
+            .wrap(Wrap { trim: false });
         Widget::render(
             Table::new([Row::new([Cell::from(Spans::from(vec![
                 Span::raw(" Status: "),

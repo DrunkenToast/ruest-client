@@ -18,7 +18,10 @@ impl Component for MethodsList {
             NormalKeyAction::Accept | NormalKeyAction::Exit => {
                 match self.selected() {
                     Some(method) => {
-                        *self.selected_method.lock().unwrap() = method;
+                        match self.selected_method.lock() {
+                            Ok(mut data) => *data = method,
+                            Err(_) => todo!(),
+                        };
                     }
                     None => todo!(),
                 };

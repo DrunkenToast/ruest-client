@@ -108,22 +108,6 @@ impl ResponseState {
 
         self.tab_index = index;
     }
-
-    pub fn handle_key(&mut self, key: NormalKeyAction) -> Option<Action> {
-        match key {
-            NormalKeyAction::PrevTab => {
-                self.prev();
-                None
-            }
-            NormalKeyAction::NextTab => {
-                self.next();
-                None
-            }
-            NormalKeyAction::Accept => None,
-
-            key => key.relative_or_none(),
-        }
-    }
 }
 
 #[derive(Default)]

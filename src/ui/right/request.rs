@@ -46,6 +46,14 @@ impl Component for RequestState {
                     self.hostname_input_state.set_input_mode(InputMode::Editing);
                     None
                 }
+                // TODO: Tabs should accept focus, think about how to solve this with the input line.
+                //
+                // NormalKeyAction::Accept => {
+                //     if Request::OPTIONS[self.tab_index] == "Body" {
+                //        self.body_input_state.set_input_mode(InputMode::Editing);
+                //     }
+                //     None
+                // }
                 key => key.relative_or_none(),
             },
             InputMode::Editing => match self.hostname_input_state.handle_key(key_event) {

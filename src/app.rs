@@ -120,20 +120,28 @@ impl<'a> App<'a> {
         }
     }
     pub async fn send_request(&mut self) -> Response {
-        let method = reqwest::Method::GET;
-        let uri = &self.right_state.request_state.hostname_input_state.value;
-        let resp = http_request(
-            method,
-            uri,
-            HeaderMap::new(),
-            HeaderValue::from_str("").unwrap(),
-            "{}",
-        )
-        .await;
-        let response = match resp {
-            Ok(r) => r,
-            Err(e) => panic!("{}", e),
-        };
-        response
+        match self.methods_list.selected() {
+            Some(method) => {
+                let uri = &self.right_state.request_state.hostname_input_state.value;
+                let resp = http_request(
+                    method,
+                    uri,
+                    HeaderMap::new(),
+                    HeaderValue::from_str("application/json").unwrap(),
+                    "{  
+                            \"title\": \"foo\",
+                            \"body\": \"bar\",
+                            \"userId\": 1
+                    }",
+                )
+                .await;
+                let response = match resp {
+                    Ok(r) => r,
+                    Err(e) => panic!("{}", e),
+                };
+                response
+            }
+            _ => panic!("Not a valid method?"),
+        }
     }
 }

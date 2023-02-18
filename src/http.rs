@@ -1,7 +1,10 @@
+use std::time::Duration;
+
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Body, IntoUrl, Method,
 };
+use tokio::time::Instant;
 
 pub async fn http_request<T, U>(
     method: reqwest::Method,
@@ -9,7 +12,7 @@ pub async fn http_request<T, U>(
     headers: HeaderMap,
     content_type: HeaderValue,
     body: T,
-) -> Result<reqwest::Response, Box<dyn std::error::Error>>
+) -> Result<(reqwest::Response, Duration), Box<dyn std::error::Error>>
 where
     U: IntoUrl,
     T: Into<Body> + Default,
@@ -29,8 +32,9 @@ where
         .body(body)
         .headers(headers)
         .header("content-type", content_type);
+    let timer = Instant::now();
     let response = request.send().await?;
-    Ok(response)
+    Ok((response, timer.elapsed()))
 }
 
 #[cfg(test)]
@@ -44,7 +48,7 @@ mod tests {
     #[test]
     async fn get_ok() {
         let _mock = mock("GET", "/").create();
-        let resp = http_request(
+        let (resp, time) = http_request(
             reqwest::Method::GET,
             mockito::server_url(),
             HeaderMap::new(),

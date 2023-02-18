@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use crossterm::event::KeyEvent;
 use tui::{
@@ -24,6 +26,7 @@ pub struct ResponseState {
     theme: GlobalTheme,
     active: bool,
     pub response: String,
+    pub time: Duration,
     scroll: u16,
 }
 
@@ -93,6 +96,7 @@ impl ResponseState {
             theme,
             active: false,
             response: String::default(),
+            time: Duration::default(),
             scroll: 0,
         }
     }
@@ -151,8 +155,13 @@ impl StatefulWidget for Response {
                     state.status_code.as_str(),
                     state.theme.status_code(state.status_code.as_u16()),
                 ),
+                Span::raw(" Time: "),
+                Span::styled(
+                    state.time.as_millis().to_string() + " ms",
+                    state.theme.focused(),
+                ),
             ]))])])
-            .widths(&[Constraint::Length(12)]),
+            .widths(&[Constraint::Length(40)]),
             chunks[0],
             buf,
         );

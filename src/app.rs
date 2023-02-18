@@ -1,6 +1,7 @@
 use std::{
     rc::Rc,
     sync::{Arc, Mutex},
+    time::Duration,
 };
 
 use super::ui::{requests_list::RequestsList, right::RightState};
@@ -19,6 +20,7 @@ use reqwest::{
     header::{HeaderMap, HeaderValue},
     Response,
 };
+use tokio::time::Instant;
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub enum PaneType {
@@ -119,27 +121,24 @@ impl<'a> App<'a> {
             self.active_pane().set_active(true);
         }
     }
-    pub async fn send_request(&mut self) -> Response {
+    pub async fn send_request(&mut self) -> (Response, Duration) {
         match self.methods_list.selected() {
             Some(method) => {
                 let uri = &self.right_state.request_state.hostname_input_state.value;
+
                 let resp = http_request(
                     method,
                     uri,
                     HeaderMap::new(),
                     HeaderValue::from_str("application/json").unwrap(),
-                    "{  
-                            \"title\": \"foo\",
-                            \"body\": \"bar\",
-                            \"userId\": 1
-                    }",
+                    "{}",
                 )
                 .await;
-                let response = match resp {
+                let (response, time) = match resp {
                     Ok(r) => r,
                     Err(e) => panic!("{}", e),
                 };
-                response
+                (response, time)
             }
             _ => panic!("Not a valid method?"),
         }

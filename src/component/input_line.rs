@@ -133,7 +133,6 @@ impl Component for InputLineState {
                 code: KeyCode::Char('h'),
                 modifiers: KeyModifiers::CONTROL,
             } => {
-                // TODO: maybe a beep sound or flast when this erorrs
                 match self.cursor_offset {
                     0 => {
                         _ = self.value.pop();
@@ -141,7 +140,6 @@ impl Component for InputLineState {
                     n if n == self.value.len() => {}
                     n => _ = self.value.remove(self.value.len() - (n+1)),
                 }
-
                 Some(Action::InputResult(InputResult::Changed))
             }
             KeyEvent {

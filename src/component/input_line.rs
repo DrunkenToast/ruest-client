@@ -139,7 +139,7 @@ impl Component for InputLineState {
                         _ = self.value.pop();
                     }
                     n if n == self.value.len() => {}
-                    n => _ = self.value.remove(self.value.len() - n),
+                    n => _ = self.value.remove(self.value.len() - (n+1)),
                 }
 
                 Some(Action::InputResult(InputResult::Changed))

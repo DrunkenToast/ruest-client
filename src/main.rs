@@ -64,20 +64,27 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App<'_>) -> io
                     GlobalKeyAction::Quit => return Ok(()),
                     GlobalKeyAction::ToggleRequestList => app.requests_list.toggle_visible(),
                     GlobalKeyAction::Send => {
-                        let (resp, time) = app.send_request().await;
-                        app.right_state.response_state.time = time;
-                        app.right_state.response_state.status_code = resp.status();
-                        if let Ok(data) = resp.text().await {
-                            if let Ok(value) = serde_json::from_str::<serde_json::Value>(&data) {
-                                app.right_state.response_state.response =
-                                    match serde_json::to_string_pretty(&value) {
-                                        Ok(data) => data,
-                                        Err(_) => todo!(),
+                        match app.send_request().await {
+                            Ok(res) => {
+                                let (resp,time) = res;
+                                app.right_state.response_state.time = time;
+                                app.right_state.response_state.status_code = resp.status();
+                                if let Ok(data) = resp.text().await {
+                                    if let Ok(value) =
+                                        serde_json::from_str::<serde_json::Value>(&data)
+                                    {
+                                        app.right_state.response_state.response =
+                                            match serde_json::to_string_pretty(&value) {
+                                                Ok(data) => data,
+                                                Err(_) => todo!(),
+                                            }
+                                    } else {
+                                        app.right_state.response_state.response = data
                                     }
-                            } else {
-                                app.right_state.response_state.response = data
+                                }
                             }
-                        }
+                            Err(res) => app.right_state.response_state.response = res,
+                        };
                     }
                     GlobalKeyAction::Methods => {
                         app.methods_list.toggle_visible();

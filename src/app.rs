@@ -20,7 +20,6 @@ use reqwest::{
     header::{HeaderMap, HeaderValue},
     Response,
 };
-use tokio::time::Instant;
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub enum PaneType {
@@ -121,7 +120,7 @@ impl<'a> App<'a> {
             self.active_pane().set_active(true);
         }
     }
-    pub async fn send_request(&mut self) -> (Response, Duration) {
+    pub async fn send_request(&mut self) -> Result<(Response, Duration), String> {
         match self.methods_list.selected() {
             Some(method) => {
                 let uri = &self.right_state.request_state.hostname_input_state.value;
@@ -134,11 +133,11 @@ impl<'a> App<'a> {
                     "{}",
                 )
                 .await;
-                let (response, time) = match resp {
-                    Ok(r) => r,
-                    Err(e) => panic!("{}", e),
+                let response = match resp {
+                    Ok(r) => Ok(r),
+                    Err(e) => Err(String::from("Invalid or unavailable URI (Make sure to include the url scheme, for example: http://)")),
                 };
-                (response, time)
+                response
             }
             _ => panic!("Not a valid method?"),
         }

@@ -66,7 +66,7 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App<'_>) -> io
                     GlobalKeyAction::Send => {
                         match app.send_request().await {
                             Ok(res) => {
-                                let (resp,time) = res;
+                                let (resp, time) = res;
                                 app.right_state.response_state.time = time;
                                 app.right_state.response_state.status_code = resp.status();
                                 if let Ok(data) = resp.text().await {

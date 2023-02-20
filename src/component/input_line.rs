@@ -69,11 +69,11 @@ impl StatefulWidget for InputLine {
     ) {
         let spans = match (state.input_mode, state.cursor_offset) {
             (InputMode::Normal, _) => Spans::from(Span::raw(state.value.as_str())),
-            (InputMode::Editing, 0) => Spans::from(vec![
+            (InputMode::Hostname, 0) => Spans::from(vec![
                 Span::raw(&state.value),
                 Span::styled(" ", state.theme.cursor()),
             ]),
-            (InputMode::Editing, cursor_offset) => {
+            (InputMode::Hostname, cursor_offset) => {
                 let offset = state.value.len().saturating_sub(cursor_offset);
                 let left = &state.value[..offset];
                 let cursor = &state.value[offset..=offset];

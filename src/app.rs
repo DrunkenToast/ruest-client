@@ -42,9 +42,8 @@ pub enum Movement {
 pub enum InputMode {
     /// All "normal" keybinds are active
     Normal,
-
-    /// Only keybinds for existing insert mode are active
-    Editing,
+    /// Only keybinds for Hostname editing mode are active
+    Hostname,
 }
 
 #[derive(Debug)]
@@ -123,7 +122,7 @@ impl<'a> App<'a> {
     pub async fn send_request(&mut self) -> Result<(Response, Duration), String> {
         match self.methods_list.selected() {
             Some(method) => {
-                let uri = &self.right_state.request_state.hostname_input_state.value;
+                let uri = &self.right_state.request_state.input_state.value;
 
                 let resp = http_request(
                     method,

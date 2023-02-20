@@ -59,7 +59,7 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App<'_>) -> io
         // TODO: only redraw when an event changed something
         if let Event::Key(key) = event::read()? {
             // Global keys
-            if app.active_pane().input_mode() != InputMode::Editing {
+            if app.active_pane().input_mode() != InputMode::Hostname {
                 match GlobalKeyAction::from(key) {
                     GlobalKeyAction::Quit => return Ok(()),
                     GlobalKeyAction::ToggleRequestList => app.requests_list.toggle_visible(),

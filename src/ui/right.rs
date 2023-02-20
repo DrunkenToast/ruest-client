@@ -16,7 +16,6 @@ use response::{Response, ResponseState};
 mod request;
 mod response;
 
-#[derive(Debug)]
 pub struct RightState {
     pub active: bool,
     pub request_state: RequestState,

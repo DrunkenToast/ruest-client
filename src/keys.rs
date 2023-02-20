@@ -11,6 +11,7 @@ pub enum GlobalKeyAction {
     Other,
 }
 
+#[derive(PartialEq)]
 pub enum NormalKeyAction {
     Exit,
     MoveLeft,

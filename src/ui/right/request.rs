@@ -21,18 +21,17 @@ use crate::{
 
 use super::RightStatePane;
 
-#[derive(Debug)]
 pub struct RequestState {
     tab_index: usize,
     active: bool,
     theme: GlobalTheme,
-    pub hostname_input_state: input_line::InputLineState,
+    pub input_state: input_line::InputLineState,
     selected_method: Arc<Mutex<reqwest::Method>>,
 }
 
 impl Component for RequestState {
     fn handle_key(&mut self, key_event: KeyEvent) -> Option<Action> {
-        match &mut self.hostname_input_state.input_mode() {
+        match &mut self.input_state.input_mode() {
             InputMode::Normal => match NormalKeyAction::from(key_event) {
                 NormalKeyAction::PrevTab => {
                     self.prev();
@@ -43,20 +42,20 @@ impl Component for RequestState {
                     None
                 }
                 NormalKeyAction::InsertMode => {
-                    self.hostname_input_state.set_input_mode(InputMode::Editing);
+                    self.input_state.set_input_mode(InputMode::Hostname);
                     None
                 }
                 // TODO: Tabs should accept focus, think about how to solve this with the input line.
-                //
                 // NormalKeyAction::Accept => {
                 //     if Request::OPTIONS[self.tab_index] == "Body" {
-                //        self.body_input_state.set_input_mode(InputMode::Editing);
+                //         self.body_input = true;
                 //     }
                 //     None
                 // }
                 key => key.relative_or_none(),
             },
-            InputMode::Editing => match self.hostname_input_state.handle_key(key_event) {
+
+            InputMode::Hostname => match self.input_state.handle_key(key_event) {
                 Some(Action::InputResult(input_line::InputResult::Accepted)) => {
                     //TODO: Do stuff here B)
                     None
@@ -77,7 +76,7 @@ impl Component for RequestState {
 
     #[inline(always)]
     fn input_mode(&self) -> InputMode {
-        self.hostname_input_state.input_mode()
+        self.input_state.input_mode()
     }
 }
 
@@ -102,7 +101,7 @@ impl RequestState {
     pub fn new(theme: GlobalTheme, selected_method: Arc<Mutex<reqwest::Method>>) -> Self {
         Self {
             tab_index: 0,
-            hostname_input_state: InputLineState::new(
+            input_state: InputLineState::new(
                 "".to_string(),
                 "Enter a hostname".to_string(),
                 theme.clone(),
@@ -188,7 +187,7 @@ impl StatefulWidget for Request {
         let area = bar_chunks[0];
         method_block.render(area, buf);
 
-        let editing = state.hostname_input_state.input_mode() == InputMode::Editing;
+        let editing = state.input_state.input_mode() == InputMode::Hostname;
         let hostname_block = Block::default()
             .borders(Borders::ALL)
             .style(state.theme.block(editing));
@@ -200,7 +199,7 @@ impl StatefulWidget for Request {
             InputLine::default(),
             inner_host_area,
             buf,
-            &mut state.hostname_input_state,
+            &mut state.input_state,
         );
 
         tabs.render(chunks[1], buf);

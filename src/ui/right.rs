@@ -1,3 +1,8 @@
+use std::{
+    marker::PhantomData,
+    sync::{Arc, Mutex},
+};
+
 use tui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
@@ -14,10 +19,9 @@ use response::{Response, ResponseState};
 mod request;
 mod response;
 
-#[derive(Debug)]
-pub struct RightState {
+pub struct RightState<'a> {
     pub active: bool,
-    pub request_state: RequestState,
+    pub request_state: RequestState<'a>,
     pub response_state: ResponseState,
     // pub local_pane: RightStatePane,
 }
@@ -30,20 +34,22 @@ pub enum RightStatePane {
 }
 
 #[derive(Default)]
-pub struct Right;
+pub struct Right<'a> {
+    _marker: PhantomData<&'a ()>,
+}
 
-impl RightState {
-    pub fn new(theme: GlobalTheme) -> Self {
+impl<'a> RightState<'a> {
+    pub fn new(theme: GlobalTheme, selected_method: Arc<Mutex<reqwest::Method>>) -> Self {
         Self {
-            request_state: RequestState::new(theme.clone()),
+            request_state: RequestState::new(theme.clone(), selected_method),
             response_state: ResponseState::new(theme),
             active: false,
         }
     }
 }
 
-impl StatefulWidget for Right {
-    type State = RightState;
+impl<'a> StatefulWidget for Right<'a> {
+    type State = RightState<'a>;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         let chunks = Layout::default()
@@ -61,7 +67,7 @@ impl StatefulWidget for Right {
     }
 }
 
-impl Component for RightState {
+impl<'a> Component for RightState<'a> {
     fn active(&self) -> bool {
         self.active
     }
@@ -71,7 +77,7 @@ impl Component for RightState {
     }
 }
 
-impl Pane for RightState {
+impl<'a> Pane for RightState<'a> {
     fn active_pane(&mut self, pane: &crate::app::PaneType) -> &mut dyn Pane {
         if let PaneType::Right(pane) = pane {
             match pane {

@@ -1,10 +1,12 @@
 use std::{error::Error, io};
 
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event},
+    event::{self, DisableMouseCapture, Event},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+
+use tokio::time::Instant;
 use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
@@ -16,11 +18,13 @@ use ui::{theme::Theme, ui};
 
 mod app;
 mod component;
+mod http;
 mod keys;
 mod pane;
 mod ui;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -30,7 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // create app and run it
     let app = App::new(Theme::default());
-    let res = run_app(&mut terminal, app);
+    let res = run_app(&mut terminal, app).await;
 
     // restore terminal
     disable_raw_mode()?;
@@ -48,7 +52,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
+async fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App<'_>) -> io::Result<()> {
     loop {
         terminal.draw(|f| ui(f, &mut app))?;
 
@@ -59,6 +63,32 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
                 match GlobalKeyAction::from(key) {
                     GlobalKeyAction::Quit => return Ok(()),
                     GlobalKeyAction::ToggleRequestList => app.requests_list.toggle_visible(),
+                    GlobalKeyAction::Send => {
+                        match app.send_request().await {
+                            Ok(res) => {
+                                let (resp, time) = res;
+                                app.right_state.response_state.time = time;
+                                app.right_state.response_state.status_code = resp.status();
+                                if let Ok(data) = resp.text().await {
+                                    if let Ok(value) =
+                                        serde_json::from_str::<serde_json::Value>(&data)
+                                    {
+                                        app.right_state.response_state.response =
+                                            match serde_json::to_string_pretty(&value) {
+                                                Ok(data) => data,
+                                                Err(_) => todo!(),
+                                            }
+                                    } else {
+                                        app.right_state.response_state.response = data
+                                    }
+                                }
+                            }
+                            Err(res) => app.right_state.response_state.response = res,
+                        };
+                    }
+                    GlobalKeyAction::Methods => {
+                        app.methods_list.toggle_visible();
+                    }
                     _ => app.handle_key_event(key),
                 }
             } else {

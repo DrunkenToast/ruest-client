@@ -1,4 +1,4 @@
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers};
 use tui::{
     layout::Alignment,
     text::{Span, Spans},
@@ -108,6 +108,8 @@ impl Component for InputLineState {
             KeyEvent {
                 code: KeyCode::Char(char),
                 modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => {
                 if self.cursor_offset == 0 {
                     self.value.push(char);
@@ -120,6 +122,8 @@ impl Component for InputLineState {
             KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => {
                 self.prev_value = self.value.clone();
                 self.set_input_mode(InputMode::Normal);
@@ -128,29 +132,35 @@ impl Component for InputLineState {
             KeyEvent {
                 code: KeyCode::Backspace,
                 modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             }
             | KeyEvent {
                 code: KeyCode::Char('h'),
                 modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => {
-                // TODO: maybe a beep sound or flast when this erorrs
                 match self.cursor_offset {
                     0 => {
                         _ = self.value.pop();
                     }
                     n if n == self.value.len() => {}
-                    n => _ = self.value.remove(self.value.len() - n),
+                    n => _ = self.value.remove(self.value.len() - (n + 1)),
                 }
-
                 Some(Action::InputResult(InputResult::Changed))
             }
             KeyEvent {
                 code: KeyCode::Delete,
                 modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             }
             | KeyEvent {
                 code: KeyCode::Char('d'),
                 modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => match self.cursor_offset {
                 1 => {
                     _ = self.value.pop().is_some();
@@ -167,6 +177,8 @@ impl Component for InputLineState {
             KeyEvent {
                 code: KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => {
                 self.value = self.prev_value.clone();
                 self.set_input_mode(InputMode::Normal);
@@ -175,10 +187,14 @@ impl Component for InputLineState {
             KeyEvent {
                 code: KeyCode::Left,
                 modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             }
             | KeyEvent {
                 code: KeyCode::Char('b'),
                 modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => {
                 if self.cursor_offset < self.value.len() {
                     self.cursor_offset += 1;
@@ -190,10 +206,14 @@ impl Component for InputLineState {
             KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             }
             | KeyEvent {
                 code: KeyCode::Char('f'),
                 modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => {
                 if self.cursor_offset > 0 {
                     self.cursor_offset -= 1;
@@ -205,10 +225,14 @@ impl Component for InputLineState {
             KeyEvent {
                 code: KeyCode::Char('a'),
                 modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             }
             | KeyEvent {
                 code: KeyCode::Home,
                 modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => {
                 self.cursor_offset = self.value.len();
                 Some(Action::InputResult(InputResult::Changed))
@@ -216,10 +240,14 @@ impl Component for InputLineState {
             KeyEvent {
                 code: KeyCode::Char('e'),
                 modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             }
             | KeyEvent {
                 code: KeyCode::End,
                 modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => {
                 self.cursor_offset = 0;
                 Some(Action::InputResult(InputResult::Changed))
@@ -227,10 +255,14 @@ impl Component for InputLineState {
             KeyEvent {
                 code: KeyCode::Char('w'),
                 modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             }
             | KeyEvent {
                 code: KeyCode::Backspace,
                 modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => {
                 let offset = self.value.len().saturating_sub(self.cursor_offset);
 
@@ -246,6 +278,8 @@ impl Component for InputLineState {
             KeyEvent {
                 code: KeyCode::Char('u'),
                 modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => {
                 let offset = self.value.len().saturating_sub(self.cursor_offset);
 
@@ -256,6 +290,8 @@ impl Component for InputLineState {
             KeyEvent {
                 code: KeyCode::Char('k'),
                 modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => {
                 let offset = self.value.len().saturating_sub(self.cursor_offset);
 
@@ -267,10 +303,14 @@ impl Component for InputLineState {
             KeyEvent {
                 code: KeyCode::Left,
                 modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             }
             | KeyEvent {
                 code: KeyCode::Char('b'),
                 modifiers: KeyModifiers::ALT,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => {
                 let offset = self.value.len().saturating_sub(self.cursor_offset);
 
@@ -284,10 +324,14 @@ impl Component for InputLineState {
             KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             }
             | KeyEvent {
                 code: KeyCode::Char('f'),
                 modifiers: KeyModifiers::ALT,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
             } => {
                 // TODO: Move 1 wort to the right
                 todo!("I rly dont know rn how to do this");

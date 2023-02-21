@@ -42,8 +42,8 @@ pub enum Movement {
 pub enum InputMode {
     /// All "normal" keybinds are active
     Normal,
-    /// Only keybinds for Hostname editing mode are active
-    Hostname,
+    /// Only keybinds for editing mode are active
+    Editing,
 }
 
 #[derive(Debug)]
@@ -54,7 +54,7 @@ pub enum Action {
 
 pub struct App<'a> {
     pub requests_list: RequestsList<&'a str>,
-    pub right_state: RightState,
+    pub right_state: RightState<'a>,
     pub theme: GlobalTheme,
     active_pane_type: PaneType,
     pub methods_list: MethodsList,
@@ -123,13 +123,14 @@ impl<'a> App<'a> {
         match self.methods_list.selected() {
             Some(method) => {
                 let uri = &self.right_state.request_state.input_state.value;
+                let body = self.right_state.request_state.body.clone().into_lines().join("\n");
 
                 let resp = http_request(
                     method,
                     uri,
                     HeaderMap::new(),
                     HeaderValue::from_str("application/json").unwrap(),
-                    "{}",
+                    body,
                 )
                 .await;
                 let response = match resp {

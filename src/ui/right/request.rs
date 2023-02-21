@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    marker::PhantomData,
+    sync::{Arc, Mutex},
+};
 
 use crossterm::event::KeyEvent;
 use tui::{
@@ -7,6 +10,7 @@ use tui::{
     text::Spans,
     widgets::{Block, Borders, Paragraph, StatefulWidget, Tabs, Widget},
 };
+use tui_textarea::TextArea;
 
 use crate::{
     app::{Action, InputMode, Movement, PaneType},
@@ -21,16 +25,25 @@ use crate::{
 
 use super::RightStatePane;
 
-pub struct RequestState {
+pub struct RequestState<'a> {
     tab_index: usize,
     active: bool,
     theme: GlobalTheme,
     pub input_state: input_line::InputLineState,
+    pub body: TextArea<'a>,
+    inner_input: bool,
     selected_method: Arc<Mutex<reqwest::Method>>,
 }
 
-impl Component for RequestState {
+impl<'a> Component for RequestState<'a> {
     fn handle_key(&mut self, key_event: KeyEvent) -> Option<Action> {
+        if self.inner_input {
+            if NormalKeyAction::from(key_event) == NormalKeyAction::Exit {
+                self.inner_input = false;
+            }
+            self.body.input(key_event);
+            return None;
+        }
         match &mut self.input_state.input_mode() {
             InputMode::Normal => match NormalKeyAction::from(key_event) {
                 NormalKeyAction::PrevTab => {
@@ -42,20 +55,21 @@ impl Component for RequestState {
                     None
                 }
                 NormalKeyAction::InsertMode => {
-                    self.input_state.set_input_mode(InputMode::Hostname);
+                    self.input_state.set_input_mode(InputMode::Editing);
                     None
                 }
                 // TODO: Tabs should accept focus, think about how to solve this with the input line.
-                // NormalKeyAction::Accept => {
-                //     if Request::OPTIONS[self.tab_index] == "Body" {
-                //         self.body_input = true;
-                //     }
-                //     None
-                // }
+                NormalKeyAction::Accept => {
+                    // if Request::OPTIONS[self.tab_index] == "Body" {
+                    //     self.body_input = true;
+                    // }
+                    self.inner_input = true;
+                    None
+                }
                 key => key.relative_or_none(),
             },
 
-            InputMode::Hostname => match self.input_state.handle_key(key_event) {
+            InputMode::Editing => match self.input_state.handle_key(key_event) {
                 Some(Action::InputResult(input_line::InputResult::Accepted)) => {
                     //TODO: Do stuff here B)
                     None
@@ -76,11 +90,14 @@ impl Component for RequestState {
 
     #[inline(always)]
     fn input_mode(&self) -> InputMode {
+        if self.inner_input {
+            return InputMode::Editing;
+        }
         self.input_state.input_mode()
     }
 }
 
-impl Pane for RequestState {
+impl<'a> Pane for RequestState<'a> {
     fn relative_pane(&self, dir: crate::app::Movement) -> Option<PaneType> {
         match dir {
             Movement::Up => None,
@@ -96,7 +113,7 @@ impl Pane for RequestState {
     }
 }
 
-impl RequestState {
+impl<'a> RequestState<'a> {
     const TAB_LEN: usize = Request::OPTIONS.len();
     pub fn new(theme: GlobalTheme, selected_method: Arc<Mutex<reqwest::Method>>) -> Self {
         Self {
@@ -108,6 +125,8 @@ impl RequestState {
             ),
             theme,
             active: false,
+            body: TextArea::from("{\n\n}".lines()),
+            inner_input: false,
             selected_method,
         }
     }
@@ -127,14 +146,16 @@ impl RequestState {
 }
 
 #[derive(Clone, Default)]
-pub struct Request {}
+pub struct Request<'a> {
+    _marker: PhantomData<&'a ()>,
+}
 
-impl Request {
+impl<'a> Request<'a> {
     const OPTIONS: &'static [&'static str] = &["Query", "Headers", "Auth", "Body"];
 }
 
-impl StatefulWidget for Request {
-    type State = RequestState;
+impl<'a> StatefulWidget for Request<'a> {
+    type State = RequestState<'a>;
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         let block = Block::default()
             .title("Request")
@@ -162,10 +183,12 @@ impl StatefulWidget for Request {
             .select(state.tab_index)
             .highlight_style(state.theme.selected());
 
+
+
         let inner = Block::default()
             .title(Self::OPTIONS[state.tab_index])
             .borders(Borders::ALL)
-            .style(state.theme.block(state.active()));
+            .style(state.theme.block(state.inner_input));
 
         let bar_chunks = Layout::default()
             .direction(Direction::Horizontal)
@@ -187,7 +210,7 @@ impl StatefulWidget for Request {
         let area = bar_chunks[0];
         method_block.render(area, buf);
 
-        let editing = state.input_state.input_mode() == InputMode::Hostname;
+        let editing = state.input_state.input_mode() == InputMode::Editing;
         let hostname_block = Block::default()
             .borders(Borders::ALL)
             .style(state.theme.block(editing));
@@ -201,6 +224,11 @@ impl StatefulWidget for Request {
             buf,
             &mut state.input_state,
         );
+
+        if Request::OPTIONS[state.tab_index] == "Body" {
+            let area = chunks[2];
+            Widget::render(state.body.widget(), inner.inner(area), buf);
+        }
 
         tabs.render(chunks[1], buf);
         inner.render(chunks[2], buf);

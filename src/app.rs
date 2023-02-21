@@ -123,7 +123,13 @@ impl<'a> App<'a> {
         match self.methods_list.selected() {
             Some(method) => {
                 let uri = &self.right_state.request_state.input_state.value;
-                let body = self.right_state.request_state.body.clone().into_lines().join("\n");
+                let body = self
+                    .right_state
+                    .request_state
+                    .body
+                    .clone()
+                    .into_lines()
+                    .join("\n");
 
                 let resp = http_request(
                     method,

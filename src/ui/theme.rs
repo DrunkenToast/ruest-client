@@ -54,7 +54,6 @@ impl Theme {
         }
     }
 
-
     pub fn selected(&self) -> Style {
         Style::default().fg(self.selected)
     }

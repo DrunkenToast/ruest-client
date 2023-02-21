@@ -183,8 +183,6 @@ impl<'a> StatefulWidget for Request<'a> {
             .select(state.tab_index)
             .highlight_style(state.theme.selected());
 
-
-
         let inner = Block::default()
             .title(Self::OPTIONS[state.tab_index])
             .borders(Borders::ALL)

@@ -1,4 +1,7 @@
-use std::{sync::{Arc, Mutex}, marker::PhantomData};
+use std::{
+    marker::PhantomData,
+    sync::{Arc, Mutex},
+};
 
 use tui::{
     buffer::Buffer,
@@ -31,8 +34,8 @@ pub enum RightStatePane {
 }
 
 #[derive(Default)]
-pub struct Right<'a>{
-    _marker: PhantomData<&'a ()>
+pub struct Right<'a> {
+    _marker: PhantomData<&'a ()>,
 }
 
 impl<'a> RightState<'a> {

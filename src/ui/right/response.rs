@@ -1,13 +1,17 @@
+use std::time::Duration;
+
+use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use crossterm::event::KeyEvent;
 use tui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Span, Spans},
-    widgets::{Block, Borders, Cell, Row, StatefulWidget, Table, Tabs, Widget},
+    widgets::{Block, Borders, Cell, Paragraph, Row, StatefulWidget, Table, Tabs, Widget, Wrap},
 };
 
 use crate::{
-    app::{Actions, Movement, PaneType},
+    app::{Action, Movement, PaneType},
+    component::Component,
     keys::NormalKeyAction,
     pane::Pane,
     ui::theme::GlobalTheme,
@@ -18,13 +22,16 @@ use super::RightStatePane;
 #[derive(Debug, Clone)]
 pub struct ResponseState {
     tab_index: usize,
-    status_code: reqwest::StatusCode,
+    pub status_code: reqwest::StatusCode,
     theme: GlobalTheme,
     active: bool,
+    pub response: String,
+    pub time: Duration,
+    scroll: u16,
 }
 
-impl Pane for ResponseState {
-    fn handle_key(&mut self, key_event: KeyEvent) -> Option<Actions> {
+impl Component for ResponseState {
+    fn handle_key(&mut self, key_event: KeyEvent) -> Option<Action> {
         match NormalKeyAction::from(key_event) {
             NormalKeyAction::PrevTab => {
                 self.prev();
@@ -34,16 +41,22 @@ impl Pane for ResponseState {
                 self.next();
                 None
             }
+            NormalKeyAction::MoveUp => {
+                self.scroll += 1;
+                None
+            }
+            NormalKeyAction::MoveDown => {
+                if self.scroll != 0 {
+                    self.scroll -= 1;
+                }
+                None
+            }
+            NormalKeyAction::Copy => {
+                let mut ctx = ClipboardContext::new().unwrap();
+                ctx.set_contents(self.response.clone()).unwrap();
+                None
+            }
             key => key.relative_or_none(),
-        }
-    }
-
-    fn relative_pane(&self, dir: crate::app::Movement) -> Option<PaneType> {
-        match dir {
-            Movement::Up => None,
-            Movement::Down => None,
-            Movement::Left => Some(PaneType::Right(RightStatePane::Request)),
-            Movement::Right => Some(PaneType::RequestList),
         }
     }
 
@@ -53,6 +66,17 @@ impl Pane for ResponseState {
 
     fn set_active(&mut self, active: bool) {
         self.active = active
+    }
+}
+
+impl Pane for ResponseState {
+    fn relative_pane(&self, dir: crate::app::Movement) -> Option<PaneType> {
+        match dir {
+            Movement::Up => None,
+            Movement::Down => None,
+            Movement::Left => Some(PaneType::Right(RightStatePane::Request)),
+            Movement::Right => Some(PaneType::RequestList),
+        }
     }
 
     fn active_pane(&mut self, _pane: &PaneType) -> &mut dyn Pane {
@@ -71,6 +95,9 @@ impl ResponseState {
             status_code: reqwest::StatusCode::default(),
             theme,
             active: false,
+            response: String::default(),
+            time: Duration::default(),
+            scroll: 0,
         }
     }
 
@@ -84,21 +111,6 @@ impl ResponseState {
         assert!(index < Self::TAB_LEN);
 
         self.tab_index = index;
-    }
-
-    pub fn handle_key(&mut self, key: NormalKeyAction) -> Option<Actions> {
-        match key {
-            NormalKeyAction::PrevTab => {
-                self.prev();
-                None
-            }
-            NormalKeyAction::NextTab => {
-                self.next();
-                None
-            }
-            NormalKeyAction::Accept => None,
-            key => key.relative_or_none(),
-        }
     }
 }
 
@@ -131,8 +143,11 @@ impl StatefulWidget for Response {
                 .as_ref(),
             )
             .split(request_area);
-        // TODO: Get status code based on response
-        state.status_code = reqwest::StatusCode::NOT_FOUND;
+
+        let response_text = Paragraph::new(state.response.clone())
+            .style(state.theme.block(state.active()))
+            .scroll((state.scroll, 0))
+            .wrap(Wrap { trim: false });
         Widget::render(
             Table::new([Row::new([Cell::from(Spans::from(vec![
                 Span::raw(" Status: "),
@@ -140,8 +155,13 @@ impl StatefulWidget for Response {
                     state.status_code.as_str(),
                     state.theme.status_code(state.status_code.as_u16()),
                 ),
+                Span::raw(" Time: "),
+                Span::styled(
+                    state.time.as_millis().to_string() + " ms",
+                    state.theme.focused(),
+                ),
             ]))])])
-            .widths(&[Constraint::Length(12)]),
+            .widths(&[Constraint::Length(40)]),
             chunks[0],
             buf,
         );
@@ -151,5 +171,6 @@ impl StatefulWidget for Response {
             .highlight_style(state.theme.selected())
             .divider("|")
             .render(chunks[1], buf);
+        response_text.render(chunks[2], buf);
     }
 }

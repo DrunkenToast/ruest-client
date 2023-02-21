@@ -9,6 +9,7 @@ pub struct Theme {
     selected: Color,
     focused: Color,
     disabled: Color,
+    editing: Color,
 
     status_500_bg: Color,
     status_500_fg: Color,
@@ -28,6 +29,7 @@ impl Default for Theme {
             selected: Color::Yellow,
             focused: Color::White,
             disabled: Color::DarkGray,
+            editing: Color::Cyan,
 
             status_500_bg: Color::Rgb(255, 62, 62),
             status_500_fg: Color::Rgb(255, 255, 255),
@@ -52,12 +54,27 @@ impl Theme {
         }
     }
 
+
     pub fn selected(&self) -> Style {
         Style::default().fg(self.selected)
     }
 
+    pub fn focused(&self) -> Style {
+        Style::default().fg(self.focused)
+    }
+
+    pub fn placeholder(&self) -> Style {
+        Style::default()
+            .add_modifier(Modifier::ITALIC)
+            .fg(self.disabled)
+    }
+
     pub fn hostname(&self) -> Style {
         Style::default().add_modifier(Modifier::BOLD)
+    }
+
+    pub fn cursor(&self) -> Style {
+        Style::default().bg(Color::White).fg(Color::Black)
     }
 
     pub fn status_code(&self, code: u16) -> Style {

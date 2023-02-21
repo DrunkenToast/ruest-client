@@ -2,7 +2,8 @@ use crossterm::event::KeyEvent;
 use tui::widgets::ListState;
 
 use crate::{
-    app::{Actions, Movement, PaneType},
+    app::{Action, Movement, PaneType},
+    component::Component,
     keys::NormalKeyAction,
     pane::Pane,
 };
@@ -17,11 +18,11 @@ pub struct RequestsList<T: Copy> {
     visible: bool,
 }
 
-impl<T: Copy> Pane for RequestsList<T> {
-    fn handle_key(&mut self, key_event: KeyEvent) -> Option<Actions> {
+impl<T: Copy> Component for RequestsList<T> {
+    fn handle_key(&mut self, key_event: KeyEvent) -> Option<Action> {
         match NormalKeyAction::from(key_event) {
             NormalKeyAction::Accept | NormalKeyAction::MoveRight => {
-                Some(Actions::MoveRelative(Movement::Right))
+                Some(Action::MoveRelative(Movement::Right))
             }
             NormalKeyAction::MoveUp => {
                 self.previous();
@@ -39,6 +40,16 @@ impl<T: Copy> Pane for RequestsList<T> {
         }
     }
 
+    fn active(&self) -> bool {
+        self.active
+    }
+
+    fn set_active(&mut self, active: bool) {
+        self.active = active
+    }
+}
+
+impl<T: Copy> Pane for RequestsList<T> {
     fn relative_pane(&self, dir: crate::app::Movement) -> Option<PaneType> {
         match dir {
             Movement::Up => None,
@@ -53,14 +64,6 @@ impl<T: Copy> Pane for RequestsList<T> {
         debug_assert!(matches!(pane, PaneType::RequestList));
 
         self
-    }
-
-    fn active(&self) -> bool {
-        self.active
-    }
-
-    fn set_active(&mut self, active: bool) {
-        self.active = active
     }
 }
 

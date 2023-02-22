@@ -5,8 +5,6 @@ use crate::{
     keys::NormalKeyAction,
 };
 
-pub mod input_line;
-
 pub trait Component {
     fn handle_key(&mut self, key_event: KeyEvent) -> Option<Action> {
         NormalKeyAction::from(key_event).relative_or_none()

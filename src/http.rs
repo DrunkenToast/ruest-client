@@ -48,7 +48,7 @@ mod tests {
     #[test]
     async fn get_ok() {
         let _mock = mock("GET", "/").create();
-        let (resp, time) = http_request(
+        let (resp, _time) = http_request(
             reqwest::Method::GET,
             mockito::server_url(),
             HeaderMap::new(),

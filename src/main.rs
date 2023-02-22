@@ -6,7 +6,6 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use tokio::time::Instant;
 use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
@@ -46,7 +45,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     terminal.show_cursor()?;
 
     if let Err(err) = res {
-        println!("{:?}", err)
+        println!("{err:?}")
     }
 
     Ok(())
@@ -59,7 +58,7 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App<'_>) -> io
         // TODO: only redraw when an event changed something
         if let Event::Key(key) = event::read()? {
             // Global keys
-            if app.active_pane().input_mode() != InputMode::Editing {
+            if app.active_pane().input_mode() == InputMode::Normal {
                 match GlobalKeyAction::from(key) {
                     GlobalKeyAction::Quit => return Ok(()),
                     GlobalKeyAction::ToggleRequestList => app.requests_list.toggle_visible(),

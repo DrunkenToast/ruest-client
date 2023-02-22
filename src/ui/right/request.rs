@@ -14,10 +14,7 @@ use tui_textarea::TextArea;
 
 use crate::{
     app::{Action, InputMode, Movement, PaneType},
-    component::{
-        input_line::{self, InputLine, InputLineState},
-        Component,
-    },
+    component::Component,
     keys::NormalKeyAction,
     pane::Pane,
     ui::theme::GlobalTheme,
@@ -29,22 +26,15 @@ pub struct RequestState<'a> {
     tab_index: usize,
     active: bool,
     theme: GlobalTheme,
-    pub input_state: input_line::InputLineState,
+    pub input_line: TextArea<'a>,
     pub body: TextArea<'a>,
-    inner_input: bool,
+    input_mode: InputMode,
     selected_method: Arc<Mutex<reqwest::Method>>,
 }
 
 impl<'a> Component for RequestState<'a> {
     fn handle_key(&mut self, key_event: KeyEvent) -> Option<Action> {
-        if self.inner_input {
-            if NormalKeyAction::from(key_event) == NormalKeyAction::Exit {
-                self.inner_input = false;
-            }
-            self.body.input(key_event);
-            return None;
-        }
-        match &mut self.input_state.input_mode() {
+        match &mut self.input_mode {
             InputMode::Normal => match NormalKeyAction::from(key_event) {
                 NormalKeyAction::PrevTab => {
                     self.prev();
@@ -55,27 +45,38 @@ impl<'a> Component for RequestState<'a> {
                     None
                 }
                 NormalKeyAction::InsertMode => {
-                    self.input_state.set_input_mode(InputMode::Editing);
+                    self.input_mode = InputMode::Hostname;
                     None
                 }
                 // TODO: Tabs should accept focus, think about how to solve this with the input line.
                 NormalKeyAction::Accept => {
-                    // if Request::OPTIONS[self.tab_index] == "Body" {
-                    //     self.body_input = true;
-                    // }
-                    self.inner_input = true;
+                    if Request::OPTIONS[self.tab_index] == "Body" {
+                        self.input_mode = InputMode::Body;
+                    }
                     None
                 }
                 key => key.relative_or_none(),
             },
 
-            InputMode::Editing => match self.input_state.handle_key(key_event) {
-                Some(Action::InputResult(input_line::InputResult::Accepted)) => {
-                    //TODO: Do stuff here B)
+            InputMode::Hostname => match NormalKeyAction::from(key_event) {
+                NormalKeyAction::Exit | NormalKeyAction::Accept => {
+                    self.input_mode = InputMode::Normal;
                     None
                 }
-                Some(Action::InputResult(input_line::InputResult::Canceled)) => None,
-                _ => None,
+                _ => {
+                    self.input_line.input(key_event);
+                    None
+                }
+            },
+            InputMode::Body => match NormalKeyAction::from(key_event) {
+                NormalKeyAction::Exit => {
+                    self.input_mode = InputMode::Normal;
+                    None
+                }
+                _ => {
+                    self.body.input(key_event);
+                    None
+                }
             },
         }
     }
@@ -90,10 +91,7 @@ impl<'a> Component for RequestState<'a> {
 
     #[inline(always)]
     fn input_mode(&self) -> InputMode {
-        if self.inner_input {
-            return InputMode::Editing;
-        }
-        self.input_state.input_mode()
+        self.input_mode
     }
 }
 
@@ -118,15 +116,11 @@ impl<'a> RequestState<'a> {
     pub fn new(theme: GlobalTheme, selected_method: Arc<Mutex<reqwest::Method>>) -> Self {
         Self {
             tab_index: 0,
-            input_state: InputLineState::new(
-                "".to_string(),
-                "Enter a hostname".to_string(),
-                theme.clone(),
-            ),
             theme,
             active: false,
+            input_line: TextArea::default(),
             body: TextArea::from("{\n\n}".lines()),
-            inner_input: false,
+            input_mode: InputMode::Normal,
             selected_method,
         }
     }
@@ -186,7 +180,7 @@ impl<'a> StatefulWidget for Request<'a> {
         let inner = Block::default()
             .title(Self::OPTIONS[state.tab_index])
             .borders(Borders::ALL)
-            .style(state.theme.block(state.inner_input));
+            .style(state.theme.block(state.input_mode == InputMode::Body));
 
         let bar_chunks = Layout::default()
             .direction(Direction::Horizontal)
@@ -208,20 +202,13 @@ impl<'a> StatefulWidget for Request<'a> {
         let area = bar_chunks[0];
         method_block.render(area, buf);
 
-        let editing = state.input_state.input_mode() == InputMode::Editing;
         let hostname_block = Block::default()
             .borders(Borders::ALL)
-            .style(state.theme.block(editing));
+            .style(state.theme.block(state.input_mode == InputMode::Hostname));
         let area = bar_chunks[1];
         let inner_host_area = hostname_block.inner(area);
         hostname_block.render(area, buf);
-
-        StatefulWidget::render(
-            InputLine::default(),
-            inner_host_area,
-            buf,
-            &mut state.input_state,
-        );
+        Widget::render(state.input_line.widget(), inner_host_area, buf);
 
         if Request::OPTIONS[state.tab_index] == "Body" {
             let area = chunks[2];

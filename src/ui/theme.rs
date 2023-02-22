@@ -9,7 +9,6 @@ pub struct Theme {
     selected: Color,
     focused: Color,
     disabled: Color,
-    editing: Color,
 
     status_500_bg: Color,
     status_500_fg: Color,
@@ -29,7 +28,6 @@ impl Default for Theme {
             selected: Color::Yellow,
             focused: Color::White,
             disabled: Color::DarkGray,
-            editing: Color::Cyan,
 
             status_500_bg: Color::Rgb(255, 62, 62),
             status_500_fg: Color::Rgb(255, 255, 255),

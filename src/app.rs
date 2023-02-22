@@ -6,7 +6,7 @@ use std::{
 
 use super::ui::{requests_list::RequestsList, right::RightState};
 use crate::{
-    component::{input_line::InputResult, Component},
+    component::Component,
     http::http_request,
     pane::Pane,
     ui::{
@@ -43,13 +43,13 @@ pub enum InputMode {
     /// All "normal" keybinds are active
     Normal,
     /// Only keybinds for editing mode are active
-    Editing,
+    Hostname,
+    Body,
 }
 
 #[derive(Debug)]
 pub enum Action {
     MoveRelative(Movement),
-    InputResult(InputResult),
 }
 
 pub struct App<'a> {
@@ -96,11 +96,14 @@ impl<'a> App<'a> {
             return;
         }
         if let Some(action) = self.active_pane().handle_key(key_event) {
-            if let Action::MoveRelative(dir) = action {
-                // TODO: move .relative_pane() into .handle_key()
-                if let Some(pane) = self.active_pane().relative_pane(dir) {
-                    self.activate_pane(pane);
+            match action {
+                Action::MoveRelative(dir) => {
+                    // TODO: move .relative_pane() into .handle_key()
+                    if let Some(pane) = self.active_pane().relative_pane(dir) {
+                        self.activate_pane(pane);
+                    }
                 }
+                _ => (),
             }
         }
     }
@@ -122,7 +125,14 @@ impl<'a> App<'a> {
     pub async fn send_request(&mut self) -> Result<(Response, Duration), String> {
         match self.methods_list.selected() {
             Some(method) => {
-                let uri = &self.right_state.request_state.input_state.value;
+                let uri = self
+                    .right_state
+                    .request_state
+                    .input_line
+                    .clone()
+                    .into_lines()
+                    .join("\n");
+
                 let body = self
                     .right_state
                     .request_state
@@ -139,11 +149,10 @@ impl<'a> App<'a> {
                     body,
                 )
                 .await;
-                let response = match resp {
+                match resp {
                     Ok(r) => Ok(r),
-                    Err(e) => Err(String::from("Invalid or unavailable URI (Make sure to include the url scheme, for example: http://)")),
-                };
-                response
+                    Err(_e) => Err(String::from("Invalid or unavailable URI (Make sure to include the url scheme, for example: http://)")),
+                }
             }
             _ => panic!("Not a valid method?"),
         }
